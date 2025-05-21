@@ -1,9 +1,12 @@
 use axum::Router;
 use axum::routing::post;
-use crate::AppState;
-use crate::handlers::{load_scene};
+use tower_http::cors::CorsLayer;
+use tower_http::trace::TraceLayer;
+use crate::scene::{load_scene};
 
-pub fn api_routes(state: AppState) -> Router {
+pub fn api_routes() -> Router {
     Router::new()
-        .route("/load", post(load_scene)).with_state(state.clone())
+        .route("/load", post(load_scene))
+        .layer(CorsLayer::permissive())
+        .layer(TraceLayer::new_for_http())
 }

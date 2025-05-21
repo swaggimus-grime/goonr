@@ -2,30 +2,55 @@ use web_sys::{HtmlCanvasElement, WebGl2RenderingContext};
 use web_sys::wasm_bindgen::JsCast;
 use yew::prelude::*;
 
+mod components;
+
 #[function_component(App)]
 fn app() -> Html {
-    let canvas_ref = use_node_ref();
+    let scene_path = use_state(|| "".to_string());
+    let response = use_state(|| "".to_string());
 
-    use_effect_with(canvas_ref.clone(), move |canvas_ref| {
-        if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
-            let gl: WebGl2RenderingContext = canvas
-                .get_context("webgl2")
-                .unwrap()
-                .unwrap()
-                .dyn_into()
-                .unwrap();
+    let on_submit = {
+        let scene_path = scene_path.clone();
+        let response = response.clone();
 
-            // TODO: Setup shaders, buffers, draw loop
-            gl.clear_color(0.1, 0.1, 0.1, 1.0);
-            gl.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT);
-        }
-        || ()
-    });
+        Callback::from(move |_| {
+            let path = scene_path.clone();
+            let resp = response.clone();
+            wasm_bindgen_futures::spawn_local(async move {
+                let body = serde_json::json!({
+                    "input_path": (*path).clone()
+                });
+
+                let result = reqwest::Client::new()
+                    .post("http://localhost:3000/load_scene")
+                    .json(&body)
+                    .send()
+                    .await;
+
+                match result {
+                    Ok(res) => {
+                        let text = res.text().await.unwrap_or("Failed to read response".into());
+                        resp.set(text);
+                    }
+                    Err(e) => resp.set(format!("Error: {e}")),
+                }
+            });
+        })
+    };
 
     html! {
         <div>
-            <h1>{ "Gaussian Splatting Viewer" }</h1>
-            <canvas ref={canvas_ref} width="800" height="600" style="border: 1px solid black;" />
+            <h1>{ "Load Scene" }</h1>
+            <input
+                type="text"
+                placeholder="Enter path to .zip or directory"
+                oninput={Callback::from(move |e: InputEvent| {
+                    let input: web_sys::HtmlInputElement = e.target_unchecked_into();
+                    scene_path.set(input.value());
+                })}
+            />
+            <button onclick={on_submit}>{ "Load" }</button>
+            <p>{ (*response).clone() }</p>
         </div>
     }
 }
