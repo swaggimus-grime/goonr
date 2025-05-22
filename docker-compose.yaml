@@ -4,9 +4,12 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     ports:
-      - "3000:3000" # adjust as needed
+      - "3000:3000"
     volumes:
-      - ./data:/data # optional for input/output dirs
+      - ./data:/data
+    environment:
+      - RUST_LOG=debug
+    restart: on-failure
 
   frontend:
     build:
@@ -16,3 +19,4 @@ services:
       - "8080:80"
     depends_on:
       - backend
+    restart: on-failure

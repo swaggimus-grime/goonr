@@ -17,9 +17,6 @@ pub fn file_picker() -> Html {
                 let reader = FileReader::new().unwrap();
                 let onload = Closure::wrap(Box::new(move |_: web_sys::ProgressEvent| {
                     log::info!("Loaded file: {}", name);
-                    // In desktop-b, invoke tauri command
-                    #[cfg(target_arch = "wasm32")]
-                    gloo::dialogs::alert(&format!("Loaded file: {}", name));
                 }) as Box<dyn FnMut(_)>);
 
                 reader.read_as_array_buffer(&file).unwrap();
