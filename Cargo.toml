@@ -1,12 +1,14 @@
 [workspace]
 resolver = "2"
-members = ["backend", "desktop", "frontend", "ml", "ml-cmd"]
+members = ["backend", "desktop/src-tauri", "frontend", "ml"]
 
 [workspace.dependencies]
 tokio = { version = "1.42.0", features = ["full"]}
 serde = { version = "1.0.219", features = ["derive"] }
+zip = { version = "4.0.0", default-features = false, features = ["deflate"] }
 log = "0.4.27"
 anyhow = "1.0.98"
+thiserror = "2.0.12"
 
 [profile.dev]
 debug = true

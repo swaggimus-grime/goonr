@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+serde = { workspace = true }
 burn = { version = "0.17.0", features = ["wgpu", "autodiff"] }
 tokio = { workspace = true }
-zip = { version = "3.0.0", features = ["deflate"] }
-glam = "0.30.3"
+glam = { version = "0.30.3", features = ["serde"]}

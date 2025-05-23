@@ -4,9 +4,10 @@ mod file;
 use std::collections::HashMap;
 use std::io;
 use std::path::Path;
+use serde::Serialize;
 use crate::scene::colmap::{ColmapDir, InputType};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Scene {
     points: HashMap<i64, Point3D>,
     images: HashMap<i32, Image>,
@@ -25,7 +26,7 @@ impl Scene {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Point3D {
     pub xyz: glam::Vec3,
     pub rgb: [u8; 3],
@@ -34,7 +35,7 @@ pub struct Point3D {
     pub point2d_idxs: Vec<i32>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Image {
     pub tvec: glam::Vec3,
     pub quat: glam::Quat,
@@ -46,7 +47,7 @@ pub struct Image {
 
 // TODO: Really these should each hold their respective params but bit of an annoying refactor. We just need
 // basic params.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum CameraModel {
     SimplePinhole,
     Pinhole,
@@ -113,7 +114,7 @@ impl CameraModel {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Camera {
     pub id: i32,
     pub model: CameraModel,

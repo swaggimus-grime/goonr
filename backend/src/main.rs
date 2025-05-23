@@ -3,14 +3,20 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use crate::routes::api_routes;
+use crate::state::AppState;
+
 
 mod routes;
 mod state;
-mod scene;
+mod error;
 
 #[tokio::main]
 async fn main() {
-    let app = api_routes();
+    let state = AppState::new();
+    
+    let app = Router::new()
+        .nest("/api", api_routes())
+        .with_state(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     println!("🚀 Listening on http://{}", addr);

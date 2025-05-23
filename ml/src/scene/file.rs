@@ -52,7 +52,7 @@ pub struct CamerasParser;
 
 type ParseResult = Pin<Box<dyn Future<Output = io::Result<InputData>> + Send>>;
 
-pub trait Parseable {
+pub trait Parseable: Send + Sync {
     fn parse_bin(&self, reader: BufReader<File>) -> ParseResult;
     fn parse_txt(&self, reader: BufReader<File>) -> ParseResult;
 }

@@ -1,14 +1,6 @@
-use std::fs;
 use std::collections::HashMap;
-use std::fs::DirEntry;
-use std::io::Cursor;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use tokio::fs::File;
 use tokio::io;
-use tokio::io::{AsyncBufRead, AsyncBufReadExt, AsyncReadExt, BufReader};
-use tokio::task::spawn_blocking;
-use zip::ZipArchive;
 use crate::scene::file::{CamerasParser, ImagesParser, InputData, Parseable, Parser, PointsParser};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -55,7 +47,7 @@ impl InputFile {
 
 impl ColmapDir {
     pub async fn new(path: &Path) -> io::Result<Self> {
-        let paths = traverse_paths(path).await?;
+        let paths = from_dir(path).await?;
 
         Ok(Self {
             input_files: queries_from_paths(paths.as_slice()).await?
@@ -68,50 +60,6 @@ impl ColmapDir {
             None => Err(io::Error::new(io::ErrorKind::NotFound, "File not found")),
         }
     }
-}
-
-#[derive(Clone)]
-pub struct ZipData {
-    data: Arc<Vec<u8>>,
-}
-
-impl AsRef<[u8]> for ZipData {
-    fn as_ref(&self) -> &[u8] {
-        &self.data
-    }
-}
-
-async fn traverse_paths(path: &Path) -> io::Result<Vec<PathBuf>> {
-    if path.is_dir() {
-        from_dir(path).await
-    } else {
-        from_file(path).await
-    }
-}
-
-async fn from_file(path: &Path) -> io::Result<Vec<PathBuf>> {
-    let path = path.to_owned();
-    
-    spawn_blocking(async move || {
-        let file = tokio::fs::File::open(path).await?;
-        let mut reader = BufReader::new(file);
-        let mut bytes = vec![];
-        reader.read_to_end(&mut bytes).await?;
-        let mut archive = ZipArchive::new(Cursor::new(ZipData {
-            data: Arc::new(bytes),
-        }))?;
-
-        let mut paths = Vec::new();
-
-        for i in 0..archive.len() {
-            let file = archive.by_index(i)?;
-            paths.push(PathBuf::from(file.name()));
-        }
-
-        Ok::<Vec<PathBuf>, io::Error>(paths)
-    }).await?;
-    
-    Err(io::Error::new(io::ErrorKind::NotFound, "File not found"))
 }
 
 async fn from_dir(dir: &Path) -> io::Result<Vec<PathBuf>>  {

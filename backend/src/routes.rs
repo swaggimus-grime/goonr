@@ -1,12 +1,16 @@
+mod scene;
+
 use axum::Router;
-use axum::routing::post;
+use axum::routing::{get, post};
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
-use crate::scene::{load_scene};
+use crate::routes::scene::{get_scene, upload_scene};
+use crate::state::AppState;
 
-pub fn api_routes() -> Router {
+pub fn api_routes() -> Router<AppState> {
     Router::new()
-        .route("/load", post(load_scene))
+        .route("/upload_scene", post(upload_scene))
+        .route("/scene/{scene_id}", get(get_scene))
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
 }
