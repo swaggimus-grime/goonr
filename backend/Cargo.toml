@@ -1,15 +1,20 @@
 [package]
 name = "backend"
 edition = "2021"
+version = "0.1.0"
 
 [dependencies]
+bytemuck = { workspace = true }
 ml = { path = "../ml" }
 tokio = { workspace = true }
 serde = { workspace = true }
-log = { workspace = true }
 zip = { workspace = true }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+uuid = { workspace = true }
 axum = { version = "0.8", features = ["macros", "json", "multipart"] }
-uuid = { version = "1", features = ["v4", "js", "serde"] }
-tower-http = { version = "0.6.4", features = ["cors", "trace"] }
+hyper = {  version = "1.4", features = ["server"] }
+tempfile = "3"
+tower-http = { version = "0.3", features = ["cors", "trace", "limit"] }

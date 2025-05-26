@@ -48,9 +48,9 @@ impl InputFile {
 impl ColmapDir {
     pub async fn new(path: &Path) -> io::Result<Self> {
         let paths = from_dir(path).await?;
-
+        let input_files = queries_from_paths(&paths).await?;
         Ok(Self {
-            input_files: queries_from_paths(paths.as_slice()).await?
+            input_files
         })
     }
     
@@ -76,10 +76,6 @@ async fn from_dir(dir: &Path) -> io::Result<Vec<PathBuf>>  {
             if path.is_dir() {
                 stack.push(path.clone());
             } else {
-                let path = path
-                    .strip_prefix(dir.clone())
-                    .map_err(|_e| io::ErrorKind::InvalidInput)?
-                    .to_path_buf();
                 paths.push(path);
             }
         }
@@ -99,10 +95,10 @@ async fn queries_from_paths(paths: &[PathBuf]) -> io::Result<HashMap<InputType, 
                 _ => continue
             };
             
-            let input_type: (InputType, Box<dyn Parseable>) = match path.file_name().unwrap().to_str().unwrap() {
+            let input_type: (InputType, Box<dyn Parseable>) = match path.file_stem().unwrap().to_str().unwrap() {
                 "cameras" => (InputType::Cameras, Box::new(CamerasParser)),
                 "images" => (InputType::Images, Box::new(ImagesParser)),
-                "points" => (InputType::Points3D, Box::new(PointsParser)),
+                "points3D" => (InputType::Points3D, Box::new(PointsParser)),
                 _ => continue
             };
             

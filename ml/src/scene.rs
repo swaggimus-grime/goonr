@@ -24,6 +24,10 @@ impl Scene {
             cameras: colmap.query(InputType::Cameras).await?.as_cameras().unwrap(),
         })
     }
+    
+    pub fn points(&self) -> &HashMap<i64, Point3D> {
+        &self.points
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]

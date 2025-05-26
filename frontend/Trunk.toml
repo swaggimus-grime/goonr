@@ -3,5 +3,5 @@ target = "index.html"
 dist = "dist"
 
 [[proxy]]
-rewrite = "/api/"
 backend = "http://localhost:3000"
+rewrite = "/api/"

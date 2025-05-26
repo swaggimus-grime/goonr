@@ -1,4 +1,3 @@
-pub mod file_picker;
 mod sidebar;
 mod topbar;
 mod viewer_canvas;
