@@ -1,6 +1,8 @@
 use gloo_console::log;
 use gloo_net::http::Request;
 use serde::Deserialize;
+use stylist::style;
+use stylist::yew::styled_component;
 use uuid::Uuid;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::spawn_local;
@@ -21,7 +23,7 @@ pub struct SceneMetadata {
     pub path: String,
 }
 
-#[function_component(Sidebar)]
+#[styled_component(Sidebar)]
 pub fn sidebar(props: &SidebarProps) -> Html {
     let file_input_ref = use_node_ref();
 
@@ -81,8 +83,15 @@ pub fn sidebar(props: &SidebarProps) -> Html {
         })
     };
 
+    let style = css!(
+        r#"
+            color: ${color};
+        "#,
+        color = "red"
+    );
+
     html! {
-        <div class="w-64 bg-gray-900 p-4 border-r border-gray-800">
+        <div class={style}>
             <h1 class="text-xl font-bold mb-6">{"Goonr Viewer"}</h1>
 
             <div class="space-y-4">

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["backend", "desktop/src-tauri", "frontend", "ml"]
+members = ["backend", "desktop/src-tauri", "frontend", "ml", "renderer"]
 
 [workspace.dependencies]
 bytemuck = { version = "1.23.0", features = ["derive"] }
@@ -14,6 +14,7 @@ log = "0.4.27"
 anyhow = "1.0.98"
 thiserror = "2.0.12"
 uuid = { version = "1", features = ["v4", "js", "serde"] }
+wgpu = {version = "25.0.0", features = ["webgl", "wgsl", "webgpu"]}
 
 [profile.dev]
 debug = true

@@ -3,15 +3,14 @@
 <head>
     <meta charset="utf-8" />
     <title>Goonr Frontend</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
-<link rel="modulepreload" href="/frontend-bbf851a3a468a596.js" crossorigin="anonymous" integrity="sha384-GhMMwE8YjM7mqzKANdDNWmvi9FzdN+8oTZyv0WhmfgLCbmVgMRNmNPnqWa8pl5Cw"><link rel="preload" href="/frontend-bbf851a3a468a596_bg.wasm" crossorigin="anonymous" integrity="sha384-tGgdUIVQHthk1JOIUqe8NG2sd9cPt32aHXEZ7hCK3m5KV5pJt3q223GwF8uF1Scq" as="fetch" type="application/wasm"></head>
+    <link rel="stylesheet" href="styles/output.css">
+<link rel="modulepreload" href="/frontend-b8c259913075dec7.js" crossorigin="anonymous" integrity="sha384-pT/WJolKS62vljX/tr+49/Pqa7I2yVNkMHfUJzNmCPivKuTaEt3MaREEz7dptHsc"><link rel="preload" href="/frontend-b8c259913075dec7_bg.wasm" crossorigin="anonymous" integrity="sha384-leZpl/yZs931VPwP7VFQzVjU1QIDtkhWu7vjEo1o8Prcw6QvdyX0h7eDJdNwU24f" as="fetch" type="application/wasm"></head>
 <body>
 <main></main>
-<script type="module">import init from './pkg/frontend.js'; init();</script>
 
 <script type="module">
-import init, * as bindings from '/frontend-bbf851a3a468a596.js';
-const wasm = await init({ module_or_path: '/frontend-bbf851a3a468a596_bg.wasm' });
+import init, * as bindings from '/frontend-b8c259913075dec7.js';
+const wasm = await init({ module_or_path: '/frontend-b8c259913075dec7_bg.wasm' });
 
 
 window.wasmBindings = bindings;
