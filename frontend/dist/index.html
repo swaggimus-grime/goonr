@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <title>Goonr Frontend</title>
-    <link rel="stylesheet" href="styles/output.css">
-<link rel="modulepreload" href="/frontend-b8c259913075dec7.js" crossorigin="anonymous" integrity="sha384-pT/WJolKS62vljX/tr+49/Pqa7I2yVNkMHfUJzNmCPivKuTaEt3MaREEz7dptHsc"><link rel="preload" href="/frontend-b8c259913075dec7_bg.wasm" crossorigin="anonymous" integrity="sha384-leZpl/yZs931VPwP7VFQzVjU1QIDtkhWu7vjEo1o8Prcw6QvdyX0h7eDJdNwU24f" as="fetch" type="application/wasm"></head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>goonr</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/output-80f5a7aba44145d2.css" integrity="sha384-2Ukc/FbAqxpfTSwGLYxZfGWjhR6154xmKJQ8nlmcssvpil2tILAOl3SOhulsDFXo"/>
+<link rel="modulepreload" href="/frontend-de39fc20aed288b5.js" crossorigin="anonymous" integrity="sha384-Ersk7ceAL4qxux2dszcnRgY+5T3cGfG1TCKjTxw4TLR0TTEIbc6JdihUaOnfbh7P"><link rel="preload" href="/frontend-de39fc20aed288b5_bg.wasm" crossorigin="anonymous" integrity="sha384-daz+jvKHJoeRhd09hMZVa2E9H4N5y6iXslruCcQVpxw3Q3mSJavrRGxJHLuhONkT" as="fetch" type="application/wasm"></head>
 <body>
 <main></main>
 
 <script type="module">
-import init, * as bindings from '/frontend-b8c259913075dec7.js';
-const wasm = await init({ module_or_path: '/frontend-b8c259913075dec7_bg.wasm' });
+import init, * as bindings from '/frontend-de39fc20aed288b5.js';
+const wasm = await init({ module_or_path: '/frontend-de39fc20aed288b5_bg.wasm' });
 
 
 window.wasmBindings = bindings;

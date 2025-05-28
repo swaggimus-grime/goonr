@@ -1,6 +1,7 @@
 [build]
 target = "index.html"
 dist = "dist"
+before_build = ["npx tailwindcss -c tailwind.config.ts -o output.css --minify"]
 
 [[proxy]]
 backend = "http://localhost:3000"

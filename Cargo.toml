@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["backend", "desktop/src-tauri", "frontend", "ml", "renderer"]
+members = ["backend", "desktop/src-tauri", "frontend", "pipeline", "renderer", "scene", "train", "viewer"]
 
 [workspace.dependencies]
 bytemuck = { version = "1.23.0", features = ["derive"] }

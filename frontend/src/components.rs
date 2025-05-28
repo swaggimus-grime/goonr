@@ -1,5 +1,4 @@
 mod sidebar;
-mod topbar;
 mod viewer_canvas;
 
 use stylist::yew::styled_component;
@@ -29,23 +28,34 @@ pub fn app() -> Html {
     };
 
     html! {
-        <div class="flex h-screen w-screen bg-gray-950 text-white font-sans">
-            <Sidebar
-                on_scene_uploaded={on_scene_uploaded}
-                scenes={(*scenes).clone()}
-                on_select_scene={on_select_scene}
-            />
-            {
-                if let Some(scene_id) = (*selected_scene_id).clone() {
-                    html! { <ViewerCanvas scene_id={scene_id} /> }
-                } else {
-                    html! {
-                        <div class="flex-1 flex items-center justify-center text-gray-500">
-                            {"Select a scene"}
-                        </div>
-                    }
-                }
-            }
+        <div class="min-h-screen bg-gradient-to-br from-[#c0f0ff] via-[#a0e0ff] to-[#c8ffe0] font-frutiger text-gray-900 dark:text-white p-8">
+            <div class="max-w-6xl mx-auto space-y-6">
+                <h1 class="text-5xl font-bold text-aeroPurple drop-shadow-glass text-center text-gray-900">
+                    {"Goonr Viewer"}
+                </h1>
+
+                <div class="bg-aeroGlass backdrop-blur-xs rounded-xl shadow-glass p-6 border border-white/20 text-gray-900 dark:text-white">
+                    <Sidebar
+                        on_scene_uploaded={on_scene_uploaded}
+                        scenes={(*scenes).clone()}
+                        on_select_scene={on_select_scene}
+                    />
+                    
+                    <div class="mt-6">
+                        {
+                            if let Some(scene_id) = (*selected_scene_id).clone() {
+                                html! { <ViewerCanvas scene_id={scene_id} /> }
+                            } else {
+                                html! {
+                                    <div class="flex items-center justify-center h-64 text-lg italic text-gray-200">
+                                        {"Select a scene to begin viewing."}
+                                    </div>
+                                }
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
         </div>
     }
 }

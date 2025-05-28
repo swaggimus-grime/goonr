@@ -1,7 +1,6 @@
 use gloo_console::log;
 use gloo_net::http::Request;
 use serde::Deserialize;
-use stylist::style;
 use stylist::yew::styled_component;
 use uuid::Uuid;
 use wasm_bindgen::JsCast;
@@ -31,7 +30,7 @@ pub fn sidebar(props: &SidebarProps) -> Html {
         let file_input_ref = file_input_ref.clone();
         Callback::from(move |_| {
             if let Some(input) = file_input_ref.cast::<HtmlInputElement>() {
-                input.click(); // Trigger hidden file input
+                input.click();
             }
         })
     };
@@ -83,43 +82,37 @@ pub fn sidebar(props: &SidebarProps) -> Html {
         })
     };
 
-    let style = css!(
-        r#"
-            color: ${color};
-        "#,
-        color = "red"
-    );
-
     html! {
-        <div class={style}>
-            <h1 class="text-xl font-bold mb-6">{"Goonr Viewer"}</h1>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm mb-1 text-gray-400">{"Load Scene"}</label>
-                    <button
-                        onclick={on_upload_click}
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded"
-                    >
-                        {"Upload"}
-                    </button>
-                    <input
-                        ref={file_input_ref}
-                        type="file"
-                        style="display: none;" // 👈 Completely hide file input
-                        onchange={on_file_change}
-                    />
-                </div>
-
-                <div>
-                    <label class="block text-sm mb-1 text-gray-400">{"Select Scene"}</label>
-                    <select onchange={on_scene_select} class="w-full bg-gray-800 text-white p-2 rounded">
-                        <option value="" disabled=true selected=true>{"Choose a scene"}</option>
-                        { for props.scenes.iter().map(|scene| html! {
-                            <option value={scene.id.clone()}>{ &scene.name }</option>
-                        })}
-                    </select>
-                </div>
+        <div class="space-y-6 font-frutiger">
+            <h2 class="text-2xl font-bold text-aeroBlue drop-shadow-glass">{ "Scene Manager" }</h2>
+    
+            <div class="space-y-2">
+                <label class="block text-sm text-gray-700 dark:text-gray-300">{ "Upload a new scene" }</label>
+                <button
+                    onclick={on_upload_click}
+                    class="w-full bg-aeroPurple hover:bg-aeroPink text-white font-medium py-2 px-4 rounded-xl shadow-glass transition-all"
+                >
+                    { "Upload" }
+                </button>
+                <input
+                    ref={file_input_ref}
+                    type="file"
+                    style="display: none;"
+                    onchange={on_file_change}
+                />
+            </div>
+    
+            <div class="space-y-2">
+                <label class="block text-sm text-gray-700 dark:text-gray-300">{ "Select existing scene" }</label>
+                <select
+                    onchange={on_scene_select}
+                    class="w-full bg-white/10 hover:bg-white/20 backdrop-blur-xs text-gray-900 dark:text-white p-2 rounded-xl shadow-glass transition-all"
+                >
+                    <option value="" disabled=true selected=true>{ "Choose a scene" }</option>
+                    { for props.scenes.iter().map(|scene| html! {
+                        <option value={scene.id.clone()}>{ &scene.name }</option>
+                    }) }
+                </select>
             </div>
         </div>
     }
