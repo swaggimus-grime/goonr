@@ -1,8 +1,9 @@
 [workspace]
 resolver = "2"
-members = ["backend", "desktop/src-tauri", "frontend", "pipeline", "renderer", "scene", "train", "viewer"]
+members = ["backend", "db", "desktop/src-tauri", "frontend", "pipeline", "renderer", "scene", "train", "viewer", "web-cmn"]
 
 [workspace.dependencies]
+async-trait = "0.1.88"
 bytemuck = { version = "1.23.0", features = ["derive"] }
 glam = { version = "0.30.3", features = ["serde"]}
 tokio = { version = "1.45.0", features = ["full"]}

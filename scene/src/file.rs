@@ -7,12 +7,6 @@ use tokio::io;
 use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, BufReader};
 use crate::scene::{Camera, CameraModel, Image, Point3D};
 
-#[derive(Debug)]
-pub enum InputData {
-    Images(HashMap<i32, Image>),
-    Points3D(HashMap<i64, Point3D>),
-    Cameras(HashMap<i32, Camera>),
-}
 
 impl InputData {
     pub fn as_images(self) -> Option<HashMap<i32, Image>> {

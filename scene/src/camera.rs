@@ -1,53 +1,5 @@
-mod colmap;
-mod file;
 
-use std::collections::HashMap;
-use std::io;
-use std::path::Path;
-use serde::Serialize;
-use crate::scene::colmap::{ColmapDir, InputType};
 
-#[derive(Debug, Clone, Serialize)]
-pub struct Scene {
-    points: HashMap<i64, Point3D>,
-    images: HashMap<i32, Image>,
-    cameras: HashMap<i32, Camera>,
-}
-
-impl Scene {
-    pub async fn new(colmap_loc: &Path) -> io::Result<Scene> {
-        let colmap = ColmapDir::new(colmap_loc).await?;
-
-        Ok(Scene {
-            points: colmap.query(InputType::Points3D).await?.as_points().unwrap(),
-            images: colmap.query(InputType::Images).await?.as_images().unwrap(),
-            cameras: colmap.query(InputType::Cameras).await?.as_cameras().unwrap(),
-        })
-    }
-    
-    pub fn points(&self) -> &HashMap<i64, Point3D> {
-        &self.points
-    }
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct Point3D {
-    pub xyz: glam::Vec3,
-    pub rgb: [u8; 3],
-    pub error: f64,
-    pub image_ids: Vec<i32>,
-    pub point2d_idxs: Vec<i32>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct Image {
-    pub tvec: glam::Vec3,
-    pub quat: glam::Quat,
-    pub camera_id: i32,
-    pub name: String,
-    pub xys: Vec<glam::Vec2>,
-    pub point3d_ids: Vec<i64>,
-}
 
 // TODO: Really these should each hold their respective params but bit of an annoying refactor. We just need
 // basic params.

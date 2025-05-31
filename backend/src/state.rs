@@ -3,31 +3,17 @@ use std::sync::Arc;
 use serde::Serialize;
 use tokio::sync::RwLock;
 use uuid::Uuid;
+use db::repo::SplatRepo;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub scenes: Arc<RwLock<HashMap<Uuid, Scene>>>,
+    pub repo: Arc<SplatRepo>,
 }
 
 impl AppState {
-    pub fn new() -> Self {
+    pub async fn new() -> Self {
         Self {
-            scenes: Arc::new(RwLock::new(HashMap::new())),
+            repo: Arc::new(SplatRepo::new().await.unwrap())
         }
     }
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct Scene {
-    pub id: Uuid,
-    pub name: String,
-    pub raw: Arc<ml::Scene>,
-    pub scene_path: std::path::PathBuf, // path to the full scene workspace
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct SceneMetadata {
-    pub id: Uuid,
-    pub name: String,
-    pub path: String,
 }

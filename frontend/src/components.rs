@@ -3,7 +3,8 @@ mod viewer_canvas;
 
 use stylist::yew::styled_component;
 use yew::{html, use_state, Callback, Html};
-use crate::components::sidebar::{SceneMetadata, Sidebar};
+use web_cmn::responses::scene::SceneMetadata;
+use crate::components::sidebar::{Sidebar};
 use crate::components::viewer_canvas::ViewerCanvas;
 
 #[styled_component(App)]

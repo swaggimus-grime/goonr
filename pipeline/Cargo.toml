@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+train = { path = "../train" }
 tokio = {workspace = true}
 tokio-stream = "0.1"
-train = { path = "../train" }

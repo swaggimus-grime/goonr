@@ -5,6 +5,7 @@ edition = "2021"
 build = "build.rs"
 
 [dependencies]
+web-cmn = { path = "../web-cmn" }
 bytemuck = { workspace = true }
 glam = { workspace = true }
 serde = { workspace = true }

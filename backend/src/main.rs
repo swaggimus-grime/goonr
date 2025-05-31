@@ -21,13 +21,11 @@ async fn main() {
     tracing_subscriber::fmt::init();
 
     // Initialize shared app state
-    let state = AppState::new();
+    let state = Arc::new(AppState::new().await);
 
     let app = Router::new()
         .merge(api_routes())
         .with_state(state);
-        //.layer(CorsLayer::permissive())
-        //.layer(TraceLayer::new_for_http());
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     info!("🚀 Listening on http://{}", addr);

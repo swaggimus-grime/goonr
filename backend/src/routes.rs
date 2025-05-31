@@ -7,11 +7,12 @@ use axum::routing::{get, post};
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use tower_http::limit::RequestBodyLimitLayer;
-use crate::routes::scene::{get_pointcloud, upload_scene};
+use crate::routes::scene::{list_scenes, upload_scene};
 use crate::state::AppState;
 
-pub fn api_routes() -> Router<AppState> {
+pub fn api_routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/upload_scene", post(upload_scene))
-        .route("/pointcloud/{scene_id}", get(get_pointcloud))
+        //.route("/pointcloud/{scene_id}", get(get_pointcloud))
+        .route("/list_scenes", get(list_scenes))
 }

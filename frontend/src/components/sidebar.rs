@@ -7,19 +7,13 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{Event, File, HtmlInputElement, HtmlSelectElement};
 use yew::prelude::*;
+use web_cmn::responses::scene::SceneMetadata;
 
 #[derive(Properties, PartialEq)]
 pub struct SidebarProps {
     pub on_scene_uploaded: Callback<SceneMetadata>,
     pub scenes: Vec<SceneMetadata>,
     pub on_select_scene: Callback<String>,
-}
-
-#[derive(Deserialize, Clone, PartialEq, Debug)]
-pub struct SceneMetadata {
-    pub id: String,
-    pub name: String,
-    pub path: String,
 }
 
 #[styled_component(Sidebar)]
@@ -110,7 +104,7 @@ pub fn sidebar(props: &SidebarProps) -> Html {
                 >
                     <option value="" disabled=true selected=true>{ "Choose a scene" }</option>
                     { for props.scenes.iter().map(|scene| html! {
-                        <option value={scene.id.clone()}>{ &scene.name }</option>
+                        <option value={scene.id.to_string()}>{ &scene.name }</option>
                     }) }
                 </select>
             </div>

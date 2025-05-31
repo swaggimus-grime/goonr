@@ -4,12 +4,14 @@ edition = "2021"
 version = "0.1.0"
 
 [dependencies]
+db = { path = "../db" }
+train = { path = "../train" }
+web-cmn = { path = "../web-cmn" }
+anyhow = { workspace = true }
 bytemuck = { workspace = true }
-ml = { path = "../train" }
 tokio = { workspace = true }
 serde = { workspace = true }
 zip = { workspace = true }
-anyhow = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
