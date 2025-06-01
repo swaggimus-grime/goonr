@@ -1,7 +1,11 @@
+pub mod input;
+mod parser;
+
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tokio::io;
-use crate::scene::file::{CamerasParser, ImagesParser, InputData, Parseable, Parser, PointsParser};
+use crate::colmap::input::{InputData, InputFile, InputFormat, InputType};
+use crate::colmap::parser::{CamerasParser, ImagesParser, Parseable, PointsParser};
 
 pub struct ColmapDir {
     input_files: HashMap<InputType, InputFile>,
@@ -56,18 +60,18 @@ async fn queries_from_paths(paths: &[PathBuf]) -> io::Result<HashMap<InputType, 
                 "bin" => InputFormat::Binary,
                 _ => continue
             };
-            
+
             let input_type: (InputType, Box<dyn Parseable>) = match path.file_stem().unwrap().to_str().unwrap() {
                 "cameras" => (InputType::Cameras, Box::new(CamerasParser)),
                 "images" => (InputType::Images, Box::new(ImagesParser)),
                 "points3D" => (InputType::Points3D, Box::new(PointsParser)),
                 _ => continue
             };
-            
+
             let file = InputFile::new(input_type.1, input_format, path.clone()).await?;
             files.insert(input_type.0, file);
         }
     }
-    
+
     Ok(files)
 }

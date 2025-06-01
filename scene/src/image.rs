@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 #[derive(Debug, Clone, Serialize)]
 pub struct Image {
     pub tvec: glam::Vec3,

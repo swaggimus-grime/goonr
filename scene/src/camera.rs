@@ -1,8 +1,5 @@
+use serde::Serialize;
 
-
-
-// TODO: Really these should each hold their respective params but bit of an annoying refactor. We just need
-// basic params.
 #[derive(Debug, Clone, Serialize)]
 pub enum CameraModel {
     SimplePinhole,
@@ -19,7 +16,7 @@ pub enum CameraModel {
 }
 
 impl CameraModel {
-    fn from_id(id: i32) -> Option<Self> {
+    pub(crate) fn from_id(id: i32) -> Option<Self> {
         match id {
             0 => Some(Self::SimplePinhole),
             1 => Some(Self::Pinhole),
@@ -36,7 +33,7 @@ impl CameraModel {
         }
     }
 
-    fn from_name(name: &str) -> Option<Self> {
+    pub(crate) fn from_name(name: &str) -> Option<Self> {
         match name {
             "SIMPLE_PINHOLE" => Some(Self::SimplePinhole),
             "PINHOLE" => Some(Self::Pinhole),
@@ -53,7 +50,7 @@ impl CameraModel {
         }
     }
 
-    fn num_params(&self) -> usize {
+    pub(crate) fn num_params(&self) -> usize {
         match self {
             Self::SimplePinhole => 3,
             Self::Pinhole => 4,

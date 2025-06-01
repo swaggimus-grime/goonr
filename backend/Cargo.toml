@@ -11,7 +11,6 @@ anyhow = { workspace = true }
 bytemuck = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
-zip = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
@@ -20,3 +19,4 @@ axum = { version = "0.8", features = ["macros", "json", "multipart"] }
 hyper = {  version = "1.4", features = ["server"] }
 tempfile = "3"
 tower-http = { version = "0.3", features = ["cors", "trace", "limit"] }
+zip-extract = { version = "0.4.0", default-features = false }

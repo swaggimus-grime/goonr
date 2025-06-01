@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 #[derive(Debug, Clone, Serialize)]
 pub struct Point3D {
     pub xyz: glam::Vec3,

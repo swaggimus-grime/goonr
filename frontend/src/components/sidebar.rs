@@ -1,13 +1,15 @@
-use gloo_console::log;
-use gloo_net::http::Request;
-use serde::Deserialize;
+mod scenes;
+
+use gloo_console::info;
+use sidebar::yew::sidebar::Sidebar;
+use sidebar::yew::item::MenuItem;
+use sidebar::yew::menu::Menu;
+use sidebar::yew::submenu::Submenu;
 use stylist::yew::styled_component;
-use uuid::Uuid;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::spawn_local;
-use web_sys::{Event, File, HtmlInputElement, HtmlSelectElement};
+use web_sys::{File, HtmlInputElement, HtmlSelectElement};
 use yew::prelude::*;
 use web_cmn::responses::scene::SceneMetadata;
+use crate::components::sidebar::scenes::ScenesSubmenu;
 
 #[derive(Properties, PartialEq)]
 pub struct SidebarProps {
@@ -16,13 +18,41 @@ pub struct SidebarProps {
     pub on_select_scene: Callback<String>,
 }
 
-#[styled_component(Sidebar)]
-pub fn sidebar(props: &SidebarProps) -> Html {
+#[styled_component(MainSidebar)]
+pub fn sidebar() -> Html {
+    let selected = use_state(|| String::from("Scenes"));
+
+    html! {
+        <Sidebar
+            logo_img_url="static/logo.svg"
+            logo_href="/"
+        >
+            <Menu sub_heading="Main">
+                <ScenesSubmenu
+                    selected={selected.clone()}
+                />
+                <MenuItem
+                    label="Settings"
+                    href="/settings"
+                    icon_html={html! {<span>{ "⚙️" }</span>}}
+                    selected={selected.clone()}
+                />
+            </Menu>
+        </Sidebar>
+    }
+    /*
     let file_input_ref = use_node_ref();
+
+    let is_open = use_state(|| true);
+
+    let toggle = {
+        let is_open = is_open.clone();
+        Callback::from(move |_: MouseEvent| is_open.set(!*is_open))
+    };
 
     let on_upload_click = {
         let file_input_ref = file_input_ref.clone();
-        Callback::from(move |_| {
+        Callback::from(move |_: MouseEvent| {
             if let Some(input) = file_input_ref.cast::<HtmlInputElement>() {
                 input.click();
             }
@@ -77,37 +107,50 @@ pub fn sidebar(props: &SidebarProps) -> Html {
     };
 
     html! {
-        <div class="space-y-6 font-frutiger">
-            <h2 class="text-2xl font-bold text-aeroBlue drop-shadow-glass">{ "Scene Manager" }</h2>
-    
-            <div class="space-y-2">
-                <label class="block text-sm text-gray-700 dark:text-gray-300">{ "Upload a new scene" }</label>
-                <button
-                    onclick={on_upload_click}
-                    class="w-full bg-aeroPurple hover:bg-aeroPink text-white font-medium py-2 px-4 rounded-xl shadow-glass transition-all"
-                >
-                    { "Upload" }
+        <div class="flex">
+            <div class={classes!(
+                "transition-all",
+                "duration-300",
+                "bg-gray-800",
+                "text-white",
+                "h-screen",
+                "p-4",
+                if *is_open { "w-64" } else { "w-16" }
+            )}>
+                <button onclick={toggle} class="text-sm text-white mb-4">
+                    { if *is_open { "<<" } else { ">>" } }
                 </button>
-                <input
-                    ref={file_input_ref}
-                    type="file"
-                    style="display: none;"
-                    onchange={on_file_change}
-                />
-            </div>
-    
-            <div class="space-y-2">
-                <label class="block text-sm text-gray-700 dark:text-gray-300">{ "Select existing scene" }</label>
-                <select
-                    onchange={on_scene_select}
-                    class="w-full bg-white/10 hover:bg-white/20 backdrop-blur-xs text-gray-900 dark:text-white p-2 rounded-xl shadow-glass transition-all"
-                >
-                    <option value="" disabled=true selected=true>{ "Choose a scene" }</option>
-                    { for props.scenes.iter().map(|scene| html! {
-                        <option value={scene.id.to_string()}>{ &scene.name }</option>
-                    }) }
-                </select>
+
+                { if *is_open {
+                    html! {
+                        <>
+                            <div class="mb-4">
+                                <label class="block mb-2 font-semibold">{"Upload Scene ZIP"}</label>
+                                <input type="file" accept=".zip"
+                                    onchange={on_file_change.clone()}
+                                    class="text-black bg-white px-2 py-1 rounded" />
+                            </div>
+
+                            <div>
+                                <h2 class="text-lg font-bold mb-2">{"Scenes"}</h2>
+                                <ul class="space-y-2">
+                                    { for props.scenes.iter().map(|scene| html! {
+                                        <div class="rounded-lg bg-white/10 p-3 shadow hover:bg-white/20 transition-all">
+                                            <div class="text-sm font-medium">{ &scene.name }</div>
+                                            <div class="text-xs text-gray-300 truncate">{ &scene.id.to_string() }</div>
+                                            <button class="mt-2 text-xs text-blue-300 hover:underline">{"Load Scene"}</button>
+                                        </div>
+                                    })}
+                                </ul>
+                            </div>
+                        </>
+                    }
+                } else {
+                    html! {}
+                }}
             </div>
         </div>
     }
+    
+     */
 }

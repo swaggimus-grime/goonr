@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -5,4 +6,5 @@ use uuid::Uuid;
 pub struct SceneMetadata {
     pub id: Uuid,
     pub name: String,
+    pub file_path: PathBuf
 }

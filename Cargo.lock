@@ -553,7 +553,7 @@ dependencies = [
  "train",
  "uuid",
  "web-cmn",
- "zip 4.0.0",
+ "zip-extract",
 ]
 
 [[package]]
@@ -2713,7 +2713,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ced92e76e966ca2fd84c8f7aa01a4aea65b0eb6648d72f7c8f3e2764a67fece"
 dependencies = [
  "crc32fast",
- "libz-rs-sys",
  "miniz_oxide",
 ]
 
@@ -2788,6 +2787,8 @@ dependencies = [
  "gloo-file 0.3.0",
  "gloo-net 0.6.0",
  "serde",
+ "sidebar",
+ "skeleton-rs",
  "stylist",
  "uuid",
  "wasm-bindgen",
@@ -5070,15 +5071,6 @@ dependencies = [
  "cc",
  "pkg-config",
  "vcpkg",
-]
-
-[[package]]
-name = "libz-rs-sys"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6489ca9bd760fe9642d7644e827b0c9add07df89857b0416ee15c1cc1a3b8c5a"
-dependencies = [
- "zlib-rs",
 ]
 
 [[package]]
@@ -8025,6 +8017,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
+name = "sidebar"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c20029bc7d79299bd6e209773019f051fbfb1fb9d7b9f25cc64654d9945b5996"
+dependencies = [
+ "web-sys",
+ "yew",
+]
+
+[[package]]
 name = "signal-hook"
 version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8098,6 +8100,17 @@ name = "siphasher"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56199f7ddabf13fe5074ce809e7d3f42b42ae711800501b5b16ea82ad029c39d"
+
+[[package]]
+name = "skeleton-rs"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "88f14b328492d024f1cad4a394c0405885f2c28ae4657127edd973a4cecc28f1"
+dependencies = [
+ "gloo-timers 0.3.0",
+ "web-sys",
+ "yew",
+]
 
 [[package]]
 name = "slab"
@@ -11328,28 +11341,19 @@ checksum = "153a6fff49d264c4babdcfa6b4d534747f520e56e8f0f384f3b808c4b64cc1fd"
 dependencies = [
  "arbitrary",
  "crc32fast",
- "flate2",
  "indexmap 2.9.0",
  "memchr",
- "zopfli",
 ]
 
 [[package]]
-name = "zlib-rs"
-version = "0.5.0"
+name = "zip-extract"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "868b928d7949e09af2f6086dfc1e01936064cc7a819253bce650d4e2a2d63ba8"
-
-[[package]]
-name = "zopfli"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edfc5ee405f504cd4984ecc6f14d02d55cfda60fa4b689434ef4102aae150cd7"
+checksum = "aed5f10c571472911e37d8f7601a8dfba52b4f7f73a344015291b82ab292faf6"
 dependencies = [
- "bumpalo",
- "crc32fast",
  "log",
- "simd-adler32",
+ "thiserror 2.0.12",
+ "zip 4.0.0",
 ]
 
 [[package]]

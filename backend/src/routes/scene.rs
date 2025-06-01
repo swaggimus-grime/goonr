@@ -4,6 +4,7 @@ use std::{
     path::PathBuf,
     io::Cursor,
 };
+use std::fs::File;
 use axum::extract::{Multipart, Path};
 use axum::http::HeaderMap;
 use axum::response::{IntoResponse, Response};
@@ -11,7 +12,7 @@ use serde::Serialize;
 use tempfile::tempdir;
 use tracing::{error, info};
 use uuid::Uuid;
-use zip::ZipArchive;
+use zip_extract::extract;
 use db::repo::SplatRepository;
 use web_cmn::responses::scene::SceneMetadata;
 use crate::error::BackendError;
@@ -29,23 +30,44 @@ pub async fn upload_scene(
         .await?
         .ok_or_else(|| BackendError::BadRequest("Missing file".into()))?;
 
-    if field.name() != Some("scene_zip") {
-        return Err(BackendError::BadRequest("Expected field 'scene_zip'".into()));
+    if field.name() == Some("scene_zip") {
+        let scene_id = Uuid::new_v4().to_string();
+        let file_name = field.file_name().unwrap().to_string();
+        let file_path = PathBuf::from(file_name.clone());
+
+        let metadata = SceneMetadata {
+            id: Uuid::new_v4(),
+            name: file_name,
+            file_path
+        };
+
+        state.repo.add_scene(metadata.clone()).await.expect(format!("Failed to add scene: {}", metadata.id).as_str());
+
+        return Ok(Json(metadata));
     }
 
-    let filename = field
-        .file_name()
-        .map(str::to_string)
-        .unwrap_or_else(|| "scene.zip".to_string());
+    Err(BackendError::BadRequest("Missing scene_zip in form".into()))
+}
 
-    let metadata = SceneMetadata {
-        id: Uuid::new_v4(),
-        name: filename,
-    };
-
-    state.repo.add_scene(metadata.clone()).await.expect(format!("Failed to add scene: {}", metadata.id).as_str());
+pub async fn parse_scene(
+    State(state): State<Arc<AppState>>,
+    Path(scene_id): Path<Uuid>
+) -> Result<(), BackendError> {
+    if let Ok(metadata) = state.repo.get_scene(scene_id) {
+        let extract_dir = PathBuf::from(format!("data/scenes/{}", scene_id));
+        std::fs::create_dir_all(&extract_dir)?;
         
-    Ok(Json(metadata))
+        let file = File::open(metadata.file_path)?;
+        if let Err(e) = extract(file, &extract_dir, true) {
+            return Err(BackendError::Zip(e));
+        }
+        
+        //let _ = Scene::new(&extract_dir);
+        
+        return Ok(());
+    }
+    
+    Err(BackendError::NotFound)
 }
 
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]

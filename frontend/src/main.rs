@@ -1,9 +1,8 @@
-use stylist::yew::styled_component;
-use uuid::Uuid;
 use yew::prelude::*;
 
 mod components;
 mod route;
+mod pages;
 
 use components::*;
 

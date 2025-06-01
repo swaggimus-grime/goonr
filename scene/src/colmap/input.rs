@@ -1,3 +1,10 @@
+use std::collections::HashMap;
+use std::io;
+use std::path::PathBuf;
+use crate::camera::Camera;
+use crate::colmap::parser::Parseable;
+use crate::image::Image;
+use crate::point3D::Point3D;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum InputType {
@@ -19,14 +26,40 @@ pub enum InputData {
     Cameras(HashMap<i32, Camera>),
 }
 
-struct InputFile {
+impl InputData {
+    pub fn as_images(self) -> Option<HashMap<i32, Image>> {
+        if let InputData::Images(map) = self {
+            Some(map)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_points(self) -> Option<HashMap<i64, Point3D>> {
+        if let InputData::Points3D(map) = self {
+            Some(map)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_cameras(self) -> Option<HashMap<i32, Camera>> {
+        if let InputData::Cameras(map) = self {
+            Some(map)
+        } else {
+            None
+        }
+    }
+}
+
+pub struct InputFile {
     parser: Box<dyn Parseable>,
     input_format: InputFormat,
     path: PathBuf,
 }
 
 impl InputFile {
-    async fn new(parser: Box<dyn Parseable>, input_format: InputFormat, path: PathBuf) -> io::Result<Self> {
+    pub async fn new(parser: Box<dyn Parseable>, input_format: InputFormat, path: PathBuf) -> io::Result<Self> {
         Ok(Self {
             parser,
             input_format,

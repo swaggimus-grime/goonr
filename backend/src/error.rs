@@ -22,8 +22,8 @@ pub enum BackendError {
     #[error("Tokio IO error")]
     TokioIo(#[from] tokio::io::Error),
     
-    #[error("Zip error")]
-    Zip(#[from] zip::result::ZipError),
+    #[error("Zip Extract error")]
+    Zip(#[from] zip_extract::ZipExtractError),
 }
 
 impl IntoResponse for BackendError {
