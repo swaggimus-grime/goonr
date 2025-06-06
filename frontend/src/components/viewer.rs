@@ -1,5 +1,6 @@
 use std::rc::Rc;
 use glam::{Mat4, Vec3};
+use stylist::yew::styled_component;
 use yew::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::spawn_local;
@@ -54,20 +55,20 @@ impl Vertex {
 }
 
 #[derive(Properties, PartialEq)]
-pub struct ViewerCanvasProps {
-    pub scene_id: String,
+pub struct ViewerProps {
+    pub scene_name: String,
 }
 
-#[function_component(ViewerCanvas)]
-pub fn viewer_canvas(props: &ViewerCanvasProps) -> Html {
-    let id = Rc::new(props.scene_id.clone());
+#[styled_component(Viewer)]
+pub fn viewer(props: &ViewerProps) -> Html {
+    let name = Rc::new(props.scene_name.clone());
     let canvas_ref = use_node_ref();
 
-    let id_effect = id.clone();
+    let name_effect = name.clone();
     let canvas_ref_effect = canvas_ref.clone();
 
-    use_effect_with(id_effect, move |id| {
-        let id = id.clone();
+    use_effect_with(name_effect, move |name| {
+        let name = name.clone();
         let canvas_ref = canvas_ref_effect.clone();
 
         spawn_local(async move {
@@ -120,7 +121,7 @@ pub fn viewer_canvas(props: &ViewerCanvasProps) -> Html {
                 };
                 surface.configure(&device, &config);
 
-                let response = gloo_net::http::Request::get(&format!("/api/pointcloud/{}", id))
+                let response = gloo_net::http::Request::put(&format!("/api/parse_scene/{}", name))
                     .send()
                     .await
                     .expect("Failed to fetch point cloud");

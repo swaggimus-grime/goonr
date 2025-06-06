@@ -1,0 +1,17 @@
+[package]
+name = "dataset"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+renderer = { path = "../renderer" }
+async-fn-stream = { workspace = true }
+futures = { workspace = true }
+burn = { workspace = true }
+glam = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+image = "0.25.6"
+walkdir = "2.5.0"

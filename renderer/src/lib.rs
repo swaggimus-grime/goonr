@@ -1,14 +1,10 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+pub mod camera;
+pub mod sh;
+pub mod splat;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+use burn::backend::wgpu::{CubeBackend, WgpuRuntime};
+use burn_fusion::Fusion;
+pub use camera::Camera;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub type MainBackendBase = CubeBackend<WgpuRuntime, f32, i32, u32>;
+pub type MainBackend = Fusion<MainBackendBase>;

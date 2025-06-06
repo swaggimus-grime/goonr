@@ -5,10 +5,10 @@ use std::pin::Pin;
 use tokio::fs::File;
 use tokio::io;
 use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, BufReader};
-use crate::camera::{Camera, CameraModel};
-use crate::colmap::input::InputData;
-use crate::image::Image;
-use crate::point3D::Point3D;
+use crate::formats::colmap::camera::{Camera, CameraModel};
+use crate::formats::colmap::image::Image;
+use crate::formats::colmap::input::InputData;
+use crate::formats::colmap::point::Point3D;
 
 pub enum Parser {
     Points(Box<PointsParser>),

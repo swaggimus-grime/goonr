@@ -6,6 +6,7 @@ version = "0.1.0"
 [dependencies]
 db = { path = "../db" }
 train = { path = "../train" }
+pipeline = { path = "../pipeline" }
 web-cmn = { path = "../web-cmn" }
 anyhow = { workspace = true }
 bytemuck = { workspace = true }

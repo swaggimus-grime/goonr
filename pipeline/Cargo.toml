@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+dataset = { path = "../dataset" }
 train = { path = "../train" }
+anyhow = { workspace = true }
+log = { workspace = true }
 tokio = {workspace = true}
 tokio-stream = "0.1"
+async-fn-stream = { workspace = true }
+futures = { workspace = true }

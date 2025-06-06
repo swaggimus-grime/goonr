@@ -7,7 +7,7 @@ use web_cmn::responses::scene::SceneMetadata;
 #[async_trait::async_trait]
 pub trait SplatRepository: Send + Sync {
     async fn add_scene(&self, scene: SceneMetadata) -> anyhow::Result<()>;
-    async fn get_scene(&self, id: Uuid) -> anyhow::Result<Option<SceneMetadata>>;
+    async fn get_scene(&self, name: String) -> anyhow::Result<Option<SceneMetadata>>;
     async fn list_scenes(&self) -> anyhow::Result<Vec<SceneMetadata>>;
 }
 
@@ -29,14 +29,14 @@ impl SplatRepo {
 #[async_trait]
 impl SplatRepository for SplatRepo {
     async fn add_scene(&self, scene: SceneMetadata) -> anyhow::Result<()> {
-        let _: Option<SceneMetadata> = self.db.create((SCENE_COL, scene.id.to_string()))
+        let _: Option<SceneMetadata> = self.db.create((SCENE_COL, scene.name.as_str()))
             .content(scene)
             .await?;
         Ok(())
     }
 
-    async fn get_scene(&self, id: Uuid) -> anyhow::Result<Option<SceneMetadata>> {
-        Ok(self.db.select((SCENE_COL, id)).await?)
+    async fn get_scene(&self, name: String) -> anyhow::Result<Option<SceneMetadata>> {
+        Ok(self.db.select((SCENE_COL, name)).await?)
     }
 
     async fn list_scenes(&self) -> anyhow::Result<Vec<SceneMetadata>> {

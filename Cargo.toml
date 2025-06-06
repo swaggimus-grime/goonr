@@ -1,9 +1,14 @@
 [workspace]
 resolver = "2"
-members = ["backend", "db", "desktop/src-tauri", "frontend", "pipeline", "renderer", "scene", "train", "viewer", "web-cmn"]
+members = ["backend", "dataset", "db", "desktop/src-tauri", "frontend", "pipeline", "renderer", "train", "viewer", "web-cmn"]
 
 [workspace.dependencies]
 async-trait = "0.1.88"
+async-fn-stream = "0.2.2"
+futures = "0.3.31"
+burn = { version = "0.17.1", features = ["wgpu", "autodiff"] }
+burn-fusion = "0.17.1"
+burn-wgpu = "0.17.1"
 bytemuck = { version = "1.23.0", features = ["derive"] }
 glam = { version = "0.30.3", features = ["serde"]}
 tokio = { version = "1.45.0", features = ["full"]}

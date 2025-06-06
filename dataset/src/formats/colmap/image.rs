@@ -1,4 +1,4 @@
-use serde::Serialize;
+use burn::serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Image {

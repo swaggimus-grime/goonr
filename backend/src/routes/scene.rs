@@ -31,17 +31,15 @@ pub async fn upload_scene(
         .ok_or_else(|| BackendError::BadRequest("Missing file".into()))?;
 
     if field.name() == Some("scene_zip") {
-        let scene_id = Uuid::new_v4().to_string();
         let file_name = field.file_name().unwrap().to_string();
         let file_path = PathBuf::from(file_name.clone());
 
         let metadata = SceneMetadata {
-            id: Uuid::new_v4(),
             name: file_name,
             file_path
         };
 
-        state.repo.add_scene(metadata.clone()).await.expect(format!("Failed to add scene: {}", metadata.id).as_str());
+        state.repo.add_scene(metadata.clone()).await.expect(format!("Failed to add scene: {}", metadata.name).as_str());
 
         return Ok(Json(metadata));
     }
@@ -51,10 +49,10 @@ pub async fn upload_scene(
 
 pub async fn parse_scene(
     State(state): State<Arc<AppState>>,
-    Path(scene_id): Path<Uuid>
+    Path(scene_name): Path<String>
 ) -> Result<(), BackendError> {
-    if let Ok(metadata) = state.repo.get_scene(scene_id) {
-        let extract_dir = PathBuf::from(format!("data/scenes/{}", scene_id));
+    if let Some(metadata) = state.repo.get_scene(scene_name.clone()).await? {
+        let extract_dir = PathBuf::from(format!("data/scenes/{}", metadata.name));
         std::fs::create_dir_all(&extract_dir)?;
         
         let file = File::open(metadata.file_path)?;
@@ -62,7 +60,7 @@ pub async fn parse_scene(
             return Err(BackendError::Zip(e));
         }
         
-        //let _ = Scene::new(&extract_dir);
+        let (stream, dataset) = pipeline::load_dataset(&extract_dir).await?;
         
         return Ok(());
     }

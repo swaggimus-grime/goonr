@@ -1,21 +1,25 @@
 mod sidebar;
-mod viewer_canvas;
+pub(crate) mod viewer;
+mod scene_manager;
 
 use stylist::yew::styled_component;
 use yew::{html, use_state, Callback, Html};
+use yew_router::{BrowserRouter, Switch};
 use web_cmn::responses::scene::SceneMetadata;
 use crate::components::sidebar::MainSidebar;
-use crate::components::viewer_canvas::ViewerCanvas;
+use crate::components::viewer::Viewer;
+use crate::route;
+use crate::route::Route;
 
 #[styled_component(App)]
 pub fn app() -> Html {
     let scenes = use_state(|| vec![]);
-    let selected_scene_id = use_state(|| None::<String>);
+    let selected_scene_name = use_state(|| None::<String>);
 
     let on_select_scene = {
-        let selected_scene_id = selected_scene_id.clone();
-        Callback::from(move |id: String| {
-            selected_scene_id.set(Some(id));
+        let selected_scene_name = selected_scene_name.clone();
+        Callback::from(move |name: String| {
+            selected_scene_name.set(Some(name));
         })
     };
 
@@ -30,7 +34,14 @@ pub fn app() -> Html {
 
     html! {
         <div class="min-h-screen bg-gradient-to-br from-[#c0f0ff] via-[#a0e0ff] to-[#c8ffe0] font-frutiger text-gray-900 dark:text-white p-8">
-            <MainSidebar/>
+            <BrowserRouter>
+                <div class="flex">
+                    <MainSidebar />
+                    <main class="flex-1 p-4 bg-gray-50">
+                        <Switch<Route> render={route::switch} />
+                    </main>
+                </div>
+            </BrowserRouter>
             <div class="max-w-6xl mx-auto space-y-6">
                 <h1 class="text-5xl font-bold text-aeroPurple drop-shadow-glass text-center text-gray-900">
                     {"Goonr"}
@@ -39,8 +50,8 @@ pub fn app() -> Html {
                 <div class="bg-aeroGlass backdrop-blur-xs rounded-xl shadow-glass p-6 border border-white/20 text-gray-900 dark:text-white">
                     <div class="mt-6">
                         {
-                            if let Some(scene_id) = (*selected_scene_id).clone() {
-                                html! { <ViewerCanvas scene_id={scene_id} /> }
+                            if let Some(scene_name) = (*selected_scene_name).clone() {
+                                html! { <Viewer scene_name={scene_name} /> }
                             } else {
                                 html! {
                                     <div class="flex items-center justify-center h-64 text-lg italic text-gray-200">
