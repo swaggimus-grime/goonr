@@ -14,6 +14,7 @@ use tracing::{error, info};
 use uuid::Uuid;
 use zip_extract::extract;
 use db::repo::SplatRepository;
+use pipeline::Pipeline;
 use web_cmn::responses::scene::SceneMetadata;
 use crate::error::BackendError;
 use crate::state::{AppState};
@@ -59,8 +60,12 @@ pub async fn parse_scene(
         if let Err(e) = extract(file, &extract_dir, true) {
             return Err(BackendError::Zip(e));
         }
+
+        state.pipeline = Some(Arc::from(Pipeline::new(extract_dir)?));
         
-        let (stream, dataset) = pipeline::load_dataset(&extract_dir).await?;
+        if let Some(pipeline) = &mut state.pipeline {
+            pipeline.launch();
+        }
         
         return Ok(());
     }

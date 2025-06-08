@@ -1,4 +1,4 @@
-use glam::{Vec2, Vec3, Quat};
+use glam::{Vec2, Vec3, Quat, Affine3A};
 
 #[derive(Debug, Default, Clone)]
 pub struct Camera {
@@ -24,6 +24,28 @@ impl Camera {
             position,
             rotation,
         }
+    }
+
+    pub fn focal(&self, img_size: glam::UVec2) -> glam::Vec2 {
+        glam::vec2(
+            fov_to_focal(self.fov_x, img_size.x) as f32,
+            fov_to_focal(self.fov_y, img_size.y) as f32,
+        )
+    }
+
+    pub fn center(&self, img_size: glam::UVec2) -> glam::Vec2 {
+        glam::vec2(
+            self.center_uv.x * img_size.x as f32,
+            self.center_uv.y * img_size.y as f32,
+        )
+    }
+
+    pub fn local_to_world(&self) -> Affine3A {
+        Affine3A::from_rotation_translation(self.rotation, self.position)
+    }
+
+    pub fn world_to_local(&self) -> Affine3A {
+        self.local_to_world().inverse()
     }
 }
 

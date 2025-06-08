@@ -7,7 +7,7 @@ pub mod splat;
 #[derive(Clone)]
 pub struct SceneView {
     pub image: ImageFile,
-    pub camera: renderer::Camera,
+    pub camera: render::Camera,
 }
 
 #[derive(Clone)]

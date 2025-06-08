@@ -5,10 +5,14 @@ edition = "2024"
 
 [dependencies]
 dataset = { path = "../dataset" }
+render = { path = "../render" }
 train = { path = "../train" }
 anyhow = { workspace = true }
+glam = { workspace = true }
 log = { workspace = true }
 tokio = {workspace = true}
 tokio-stream = "0.1"
 async-fn-stream = { workspace = true }
+async-trait = { workspace = true }
 futures = { workspace = true }
+thiserror = { workspace = true }

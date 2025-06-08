@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-renderer = { path = "../renderer" }
+render = { path = "../render" }
 async-fn-stream = { workspace = true }
+burn-wgpu = { workspace = true }
 futures = { workspace = true }
 burn = { workspace = true }
 glam = { workspace = true }

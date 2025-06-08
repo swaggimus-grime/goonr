@@ -4,11 +4,14 @@ pub type Result<T> = std::result::Result<T, DatasetError>;
 
 #[derive(Error, Debug)]
 pub enum FormatError {
-    #[error("IO error while loading dataset.")]
-    Io(#[from] std::io::Error),
+    #[error("IO error while loading dataset: {0}")]
+    Io(String),
 
     #[error("Error decoding camera parameters: {0}")]
     InvalidCamera(&'static str),
+
+    #[error("Image error: {0}")]
+    InvalidImage(#[from] image::ImageError),
 }
 
 #[derive(Debug, Error)]

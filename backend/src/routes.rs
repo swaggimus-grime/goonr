@@ -14,6 +14,5 @@ pub fn api_routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/upload_scene", post(upload_scene))
         .route("/parse_scene/{scene_name}", put(parse_scene))
-        //.route("/pointcloud/{scene_id}", get(get_pointcloud))
         .route("/list_scenes", get(list_scenes))
 }

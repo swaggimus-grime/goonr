@@ -3,9 +3,10 @@ use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use burn::serde::Serialize;
 use glam::UVec2;
-use image::{ColorType, DynamicImage, ImageError, ImageReader};
+use image::{ColorType, DynamicImage, ImageError, ImageReader, ImageDecoder};
 
-#[derive(Debug, Clone, Serialize)]
+
+#[derive(Debug, Clone)]
 pub struct ImageFile {
     path: PathBuf,
     max_res: u32,

@@ -2204,11 +2204,12 @@ version = "0.1.0"
 dependencies = [
  "async-fn-stream",
  "burn",
+ "burn-wgpu",
  "futures",
  "glam",
  "image",
  "log",
- "renderer",
+ "render",
  "serde",
  "thiserror 2.0.12",
  "tokio",
@@ -6454,9 +6455,13 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-fn-stream",
+ "async-trait",
  "dataset",
  "futures",
+ "glam",
  "log",
+ "render",
+ "thiserror 2.0.12",
  "tokio",
  "tokio-stream",
  "train",
@@ -7235,13 +7240,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "renderdoc-sys"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19b30a45b0cd0bcca8037f3d0dc3421eaf95327a17cad11964fb8179b4fc4832"
-
-[[package]]
-name = "renderer"
+name = "render"
 version = "0.1.0"
 dependencies = [
  "ball-tree",
@@ -7249,6 +7248,12 @@ dependencies = [
  "burn-fusion",
  "glam",
 ]
+
+[[package]]
+name = "renderdoc-sys"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19b30a45b0cd0bcca8037f3d0dc3421eaf95327a17cad11964fb8179b4fc4832"
 
 [[package]]
 name = "reqwest"
@@ -9518,6 +9523,7 @@ name = "train"
 version = "0.1.0"
 dependencies = [
  "burn",
+ "burn-wgpu",
  "glam",
  "serde",
  "tokio",

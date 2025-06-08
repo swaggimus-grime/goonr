@@ -1,19 +1,39 @@
 use std::path::{Path, PathBuf};
 use async_fn_stream::try_fn_stream;
 use futures::Stream;
-use crate::message::Message;
+use crate::pipeline_stream::PipelineStream;
+use crate::train_stream::TrainStream;
+use crate::view_stream::ViewStream;
+use crate::error::Result;
 
-mod training;
+pub use crate::error::PipelineError;
+
+mod train_stream;
 mod message;
+mod view_stream;
+mod error;
+mod pipeline_stream;
 
-
-
-pub async fn splat_stream(scene_path: PathBuf) -> impl Stream<Item = Result<Message, anyhow::Error>> + 'static {
-    try_fn_stream(|emitter| async move {
-        emitter.emit(Message::NewSource).await;
-        
-        let (mut stream, dataset) = dataset::load_dataset(scene_path, dataset::LoadConfig::new())?;
-        
-    });
+pub struct Pipeline {
+    train: TrainStream,
+    view: ViewStream,
 }
+
+impl Pipeline {
+    pub fn new(scene_dir: PathBuf) -> Result<Self> {
+        let train = TrainStream::new(scene_dir);
+        let view =  ViewStream::new();
+        
+        Ok(Self {
+            train,
+            view
+        })
+    }
+    
+    pub fn launch(&mut self) {
+        self.train.launch();
+        self.view.launch();
+    }
+}
+
 

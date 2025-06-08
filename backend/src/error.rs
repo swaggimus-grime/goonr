@@ -24,6 +24,9 @@ pub enum BackendError {
     
     #[error("Zip Extract error")]
     Zip(#[from] zip_extract::ZipExtractError),
+
+    #[error("Pipeline error")]
+    Pipeline(#[from] pipeline::PipelineError),
 }
 
 impl IntoResponse for BackendError {

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["backend", "dataset", "db", "desktop/src-tauri", "frontend", "pipeline", "renderer", "train", "viewer", "web-cmn"]
+members = ["backend", "dataset", "db", "desktop/src-tauri", "frontend", "pipeline", "render", "train", "viewer", "web-cmn"]
 
 [workspace.dependencies]
 async-trait = "0.1.88"

@@ -14,8 +14,8 @@ use async_fn_stream::try_fn_stream;
 use burn::backend::wgpu::WgpuDevice;
 use glam::Vec3;
 use log::info;
-use renderer::sh::rgb_to_sh;
-use renderer::splat::Splats;
+use render::sh::rgb_to_sh;
+use render::splat::Splats;
 use crate::config::LoadConfig;
 use crate::Dataset;
 use crate::filesystem::Filesystem;
@@ -28,7 +28,7 @@ use crate::formats::DataStream;
 use crate::scene::{ImageFile, SceneView};
 use crate::scene::splat::{ParseMetadata, SplatMessage};
 
-pub async fn load(fs: Arc<Filesystem>, config: LoadConfig, device: &WgpuDevice) -> Option<Result<(DataStream<SplatMessage>, Dataset)>> {
+pub async fn load(fs: Arc<Filesystem>, config: LoadConfig, device: &WgpuDevice) -> Result<(DataStream<SplatMessage>, Dataset)> {
     let (cam_path, img_path, is_bin) = if let Some(path) = fs.file_ending_in("cameras.bin") {
         let path = path.parent().expect("unreachable");
         (path.join("cameras.bin"), path.join("images.bin"), true)
@@ -36,7 +36,7 @@ pub async fn load(fs: Arc<Filesystem>, config: LoadConfig, device: &WgpuDevice) 
         let path = path.parent().expect("unreachable");
         (path.join("cameras.txt"), path.join("images.txt"), false)
     } else {
-        return None;
+        return Err(DatasetError::from(FormatError::Io(String::from("Camera file could be found"))));
     };
     
     let cam_model_data = InputFile::new(cam_path, InputType::Cameras, is_bin).parse().await.unwrap().as_cameras().unwrap();
@@ -45,10 +45,11 @@ pub async fn load(fs: Arc<Filesystem>, config: LoadConfig, device: &WgpuDevice) 
     let mut img_info_list = img_infos.into_iter().collect::<Vec<_>>();
     img_info_list.sort_by_key(|key_img| key_img.1.name.clone());
     
-    let (train_views, eval_views) = create_views(fs.clone(), &cam_model_data, &img_info_list, &config).await;
+    let (train_views, eval_views) = create_views(fs.clone(), &cam_model_data, &img_info_list, &config).await?;
 
     let load_args = config.clone();
     let fs = fs.clone();
+    let device = device.clone();
     let init_stream = try_fn_stream(|emitter| async move {
         let points_path = fs.file_ending_in("points3d.txt")
             .or_else(|| fs.file_ending_in("points3d.bin"));
@@ -108,13 +109,13 @@ pub async fn load(fs: Arc<Filesystem>, config: LoadConfig, device: &WgpuDevice) 
         Ok(())
     });
 
-    Some(Ok((
+    Ok((
         Box::pin(init_stream),
         Dataset::from_views(train_views, eval_views),
-    )))
+    ))
 }
 
-async fn create_views(fs: Arc<Filesystem>, cam_model_data: &HashMap<i32, Camera>, img_info_list: &Vec<(i32, Image)>, config: &LoadConfig) -> (Vec<SceneView>, Vec<SceneView>) {
+async fn create_views(fs: Arc<Filesystem>, cam_model_data: &HashMap<i32, Camera>, img_info_list: &Vec<(i32, Image)>, config: &LoadConfig) -> Result<(Vec<SceneView>, Vec<SceneView>)> {
     let mut train_views = vec![];
     let mut eval_views = vec![];
 
@@ -129,8 +130,8 @@ async fn create_views(fs: Arc<Filesystem>, cam_model_data: &HashMap<i32, Camera>
         // Create a future to handle loading the image.
         let focal = cam_data.focal();
 
-        let fovx = renderer::camera::focal_to_fov(focal.0, cam_data.width as u32);
-        let fovy = renderer::camera::focal_to_fov(focal.1, cam_data.height as u32);
+        let fovx = render::camera::focal_to_fov(focal.0, cam_data.width as u32);
+        let fovy = render::camera::focal_to_fov(focal.1, cam_data.height as u32);
 
         let center = cam_data.principal_point();
         let center_uv = center / glam::vec2(cam_data.width as f32, cam_data.height as f32);
@@ -140,19 +141,17 @@ async fn create_views(fs: Arc<Filesystem>, cam_model_data: &HashMap<i32, Camera>
         let cam_to_world = world_to_cam.inverse();
         let (_, quat, translation) = cam_to_world.to_scale_rotation_translation();
 
-        let camera = renderer::Camera::new(translation, quat, fovx, fovy, center_uv);
-
-        info!("Loaded COLMAP image at path {path:?}");
+        let camera = render::Camera::new(translation, quat, fovx, fovy, center_uv);
 
         let img_file = if let Some(img_path) = fs.file_ending_in(&img_info.name) {
             Ok(ImageFile::new(img_path.as_path(), config.max_resolution))
         } else {
-            Err(DatasetError::FormatError(FormatError::Io(Error::from(ErrorKind::NotFound))))
-        };
+            Err(DatasetError::from(FormatError::Io(format!("Image file {} not found", &img_info.name))))
+        }?.or_else(|err| {Err(DatasetError::from(FormatError::InvalidImage(err)))});
 
         let view = SceneView {
             camera,
-            image: img_file.unwrap().await.unwrap()
+            image: img_file?
         };
 
         if let Some(eval_period) = config.eval_split_every {
@@ -165,4 +164,6 @@ async fn create_views(fs: Arc<Filesystem>, cam_model_data: &HashMap<i32, Camera>
             train_views.push(view);
         }
     }
+    
+    Ok((train_views, eval_views))
 }
