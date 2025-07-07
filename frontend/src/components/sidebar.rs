@@ -1,31 +1,27 @@
 mod scene_list;
-mod scene_upload;
+mod scene_upload_btn;
 
 use std::path::PathBuf;
 use gloo_console::info;
 use stylist::yew::styled_component;
-use uuid::Uuid;
 use wasm_bindgen::JsCast;
 use web_sys::{File, HtmlInputElement, HtmlSelectElement};
 use yew::prelude::*;
 use yew_router::prelude::Link;
-use web_cmn::responses::scene::SceneMetadata;
+use web_cmn::scene::SceneResponse;
 use crate::components::sidebar::scene_list::{SceneList};
-use crate::components::sidebar::scene_upload::SceneUpload;
+use crate::components::sidebar::scene_upload_btn::{SceneUploadBtn};
 use crate::route::Route;
 
 #[derive(Properties, PartialEq)]
 pub struct SidebarProps {
-    pub on_scene_uploaded: Callback<SceneMetadata>,
-    pub scenes: Vec<SceneMetadata>,
-    pub on_select_scene: Callback<String>,
+    pub on_upload_click: Callback<MouseEvent>,
+    pub scenes: UseStateHandle<Vec<SceneResponse>>,
 }
 
 #[styled_component(MainSidebar)]
-pub fn sidebar() -> Html {
-    let file_input_ref = use_node_ref();
+pub fn sidebar(props: &SidebarProps) -> Html {
     let collapsed = use_state(|| true); // Start collapsed like YouTube
-    let scenes = use_state(|| vec![]);
 
     let toggle = {
         let collapsed = collapsed.clone();
@@ -35,7 +31,7 @@ pub fn sidebar() -> Html {
     html! {
         <aside class={classes!(
             "h-screen",
-            "bg-white",
+            "bg-green",
             "border-r",
             "shadow",
             "flex",
@@ -63,14 +59,15 @@ pub fn sidebar() -> Html {
                         { nav_item(Route::Scenes, "📚", "Scenes") }
                         <hr class="my-2 border-gray-300" />
                         <div class="mt-4 px-2 overflow-y-auto max-h-64">
-                            <SceneUpload
-                                file_input_ref = {file_input_ref.clone()}
-                                scenes = {scenes.clone()}
+                            <SceneUploadBtn
+                                scenes = {props.scenes.clone()}
+                                on_click = {props.on_upload_click.clone()}
                             />
                         </div>
+                        <hr class="my-2 border-gray-300" />
                         <div class="mt-4 px-2 overflow-y-auto max-h-64">
                             <SceneList
-                                scenes = {scenes.clone()}
+                                scenes = {props.scenes.clone()}
                             />
                         </div>
                     </>

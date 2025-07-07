@@ -1,6 +1,6 @@
 use glam::Vec3;
+use render::gaussian_splats::Splats;
 use render::MainBackend;
-use render::splat::Splats;
 
 pub struct ParseMetadata {
     pub up_axis: Option<Vec3>,

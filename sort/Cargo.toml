@@ -1,0 +1,26 @@
+[package]
+name = "sort"
+edition.workspace = true
+version.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[dependencies]
+kernel.path = "../kernel"
+burn.workspace = true
+burn-wgpu.workspace = true
+burn-cubecl.workspace = true
+tracing.workspace = true
+naga_oil.workspace = true
+bytemuck.workspace = true
+wgpu.workspace = true
+
+[dev-dependencies]
+rand.workspace = true
+
+[build-dependencies]
+wgsl.path = "../wgsl"
+miette.workspace = true
+
+[lints]
+workspace = true

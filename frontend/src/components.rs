@@ -1,68 +1,90 @@
 mod sidebar;
-pub(crate) mod viewer;
+pub(crate) mod viewer_canvas;
 mod scene_manager;
+mod forms;
 
+use gloo_console::log;
 use stylist::yew::styled_component;
-use yew::{html, use_state, Callback, Html};
+use wasm_bindgen_futures::spawn_local;
+use yew::{html, use_effect_with, use_state, Callback, Html};
 use yew_router::{BrowserRouter, Switch};
-use web_cmn::responses::scene::SceneMetadata;
+use web_cmn::scene::{SceneResponse};
+use crate::components::forms::scene_upload::SceneUploadModal;
 use crate::components::sidebar::MainSidebar;
-use crate::components::viewer::Viewer;
 use crate::route;
 use crate::route::Route;
+use crate::services::scene::fetch_scenes;
 
 #[styled_component(App)]
 pub fn app() -> Html {
-    let scenes = use_state(|| vec![]);
-    let selected_scene_name = use_state(|| None::<String>);
-
-    let on_select_scene = {
-        let selected_scene_name = selected_scene_name.clone();
-        Callback::from(move |name: String| {
-            selected_scene_name.set(Some(name));
-        })
-    };
+    let scenes = use_state(|| {
+        vec![]
+    });
+    {
+        let scenes = scenes.clone();
+        use_effect_with((),
+            move |_| {
+                spawn_local(async move {
+                    match fetch_scenes().await {
+                        Ok(fetched) => scenes.set(fetched),
+                        Err(err) => log!(format!("Failed to fetch scenes: {err:?}")),
+                    }
+                });
+                || ()
+            }
+        );
+    }
+    let selected_scene_id = use_state(|| None::<String>);
+    let show_upload_modal = use_state(|| false);
 
     let on_scene_uploaded = {
         let scenes = scenes.clone();
-        Callback::from(move |metadata: SceneMetadata| {
-            let mut new_scenes = (*scenes).clone();
-            new_scenes.push(metadata);
-            scenes.set(new_scenes);
+        Callback::from(move |response: SceneResponse| {
+            scenes.set({
+                let mut new_scenes = (*scenes).clone();
+                new_scenes.push(response);
+                new_scenes
+            });
         })
     };
 
     html! {
-        <div class="min-h-screen bg-gradient-to-br from-[#c0f0ff] via-[#a0e0ff] to-[#c8ffe0] font-frutiger text-gray-900 dark:text-white p-8">
-            <BrowserRouter>
-                <div class="flex">
-                    <MainSidebar />
-                    <main class="flex-1 p-4 bg-gray-50">
-                        <Switch<Route> render={route::switch} />
-                    </main>
-                </div>
-            </BrowserRouter>
-            <div class="max-w-6xl mx-auto space-y-6">
-                <h1 class="text-5xl font-bold text-aeroPurple drop-shadow-glass text-center text-gray-900">
-                    {"Goonr"}
-                </h1>
-
-                <div class="bg-aeroGlass backdrop-blur-xs rounded-xl shadow-glass p-6 border border-white/20 text-gray-900 dark:text-white">
-                    <div class="mt-6">
-                        {
-                            if let Some(scene_name) = (*selected_scene_name).clone() {
-                                html! { <Viewer scene_name={scene_name} /> }
-                            } else {
-                                html! {
-                                    <div class="flex items-center justify-center h-64 text-lg italic text-gray-200">
-                                        {"Select a scene to begin viewing."}
-                                    </div>
-                                }
-                            }
-                        }
+        <>
+            <div class="min-h-screen bg-gradient-to-br from-[#c0f0ff] via-[#a0e0ff] to-[#c8ffe0] font-frutiger text-gray-900 dark:text-white p-8">
+                <BrowserRouter>
+                    <div class="flex">
+                        <MainSidebar
+                            scenes = {scenes.clone()}
+                            on_upload_click={Callback::from({
+                                let show_upload_modal = show_upload_modal.clone();
+                                move |_| show_upload_modal.set(true)
+                            })}
+                        />
+                        <main class="flex-1 p-4 bg-gray-50">
+                            <Switch<Route> render={route::switch} />
+                        </main>
                     </div>
-                </div>
+                </BrowserRouter>
             </div>
-        </div>
+            {
+                if *show_upload_modal {
+                    html! {
+                        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                            <SceneUploadModal 
+                                on_close = {
+                                    Callback::from({
+                                        let show_upload_modal = show_upload_modal.clone();
+                                        move |_| show_upload_modal.set(false)
+                                    })
+                                }
+                                on_scene_uploaded = {on_scene_uploaded.clone()}
+                            />
+                        </div>
+                    }
+                } else {
+                    html! {}
+                }
+            }
+        </>
     }
 }

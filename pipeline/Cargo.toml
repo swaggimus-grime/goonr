@@ -1,18 +1,31 @@
 [package]
 name = "pipeline"
-version = "0.1.0"
-edition = "2024"
+edition.workspace = true
+version.workspace = true
+readme.workspace = true
+license.workspace = true
 
 [dependencies]
 dataset = { path = "../dataset" }
 render = { path = "../render" }
+scene-source = { path = "../scene-source"}
 train = { path = "../train" }
 anyhow = { workspace = true }
+burn.workspace = true
+burn-wgpu.workspace = true
+burn-cubecl.workspace = true
 glam = { workspace = true }
+image.workspace = true
 log = { workspace = true }
+rand.workspace = true
 tokio = {workspace = true}
 tokio-stream = "0.1"
 async-fn-stream = { workspace = true }
 async-trait = { workspace = true }
 futures = { workspace = true }
 thiserror = { workspace = true }
+tokio_with_wasm.workspace = true
+serde = { version = "1.0.219", features = ["derive"] }
+
+[lints]
+workspace = true

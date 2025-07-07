@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-web-cmn = { path = "../web-cmn" }
+scene-source.path = "../scene-source"
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 serde = { workspace = true }
-surrealdb = { version = "2.3.3", features = ["kv-mem"] }
+surrealdb = { version = "2.3.3", features = ["kv-mem", "kv-rocksdb"] }
+tracing = { workspace = true }

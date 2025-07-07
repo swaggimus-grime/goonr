@@ -1,2 +1,2 @@
-// crates/viewer/src/viewer.rs
+// crates/viewer/src/viewer_canvas
 

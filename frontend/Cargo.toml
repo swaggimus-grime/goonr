@@ -5,16 +5,16 @@ edition = "2021"
 build = "build.rs"
 
 [dependencies]
+viewer = { path = "../viewer" }
 web-cmn = { path = "../web-cmn" }
-bytemuck = { workspace = true }
-glam = { workspace = true }
-serde = { workspace = true }
-uuid = { workspace = true }
-wgpu = { workspace = true }
+futures-util = "0.3.31"
 stylist = { version = "0.13.0", features = ["yew_integration"]}
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror.workspace = true
 yew = { version = "0.21", features = ["csr"] }
 yew-router = "0.18.0"
-web-sys = { version = "0.3.77", features = [
+web-sys = { workspace = true, features = [
     "HtmlCanvasElement",
     "HtmlSelectElement",
     "Window",
@@ -33,6 +33,6 @@ wasm-logger = "0.2.0"
 gloo = "0.11.0"
 gloo-console = "0.3.0"
 gloo-file = "0.3.0"
-gloo-net = "0.6.0"
+gloo-net = { version = "0.6.0", features = ["websocket"] }
 
 [features]

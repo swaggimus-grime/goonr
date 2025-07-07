@@ -1,31 +1,41 @@
+use std::fs::File;
 use std::io;
-use std::io::ErrorKind;
+use std::io::{Cursor, ErrorKind};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use burn::serde::Serialize;
 use glam::UVec2;
 use image::{ColorType, DynamicImage, ImageError, ImageReader, ImageDecoder};
+use tokio::io::{AsyncRead, AsyncReadExt};
+use scene_source::Filesystem;
 
-
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ImageFile {
-    path: PathBuf,
+    pub path: PathBuf,
     max_res: u32,
+    mask_path: Option<PathBuf>,
     size: UVec2,
-    color_fmt: ColorType
+    color_fmt: ColorType,
+    fs: Arc<Filesystem>
 }
 
 impl ImageFile {
-    pub fn new(
+    pub async fn new(
+        fs: Arc<Filesystem>,
         path: &Path,
+        mask_path: Option<PathBuf>,
         max_resolution: u32,
     ) -> image::ImageResult<Self> {
-        let prelim = preliminary_data(path)?;
+        let reader = &mut fs.reader_at_path(path).await?;
+        let prelim = preliminary_data(reader).await?;
 
         Ok(Self {
             path: path.to_path_buf(),
             max_res: max_resolution,
+            mask_path,
             size: prelim.0,
-            color_fmt: prelim.1
+            color_fmt: prelim.1,
+            fs
         })
     }
 
@@ -43,10 +53,61 @@ impl ImageFile {
         }
     }
 
+    pub fn has_alpha(&self) -> bool {
+        self.color_fmt.has_alpha() || self.is_masked()
+    }
+
+    pub fn width(&self) -> u32 {
+        self.dim().x
+    }
+
+    pub fn height(&self) -> u32 {
+        self.dim().y
+    }
+
+    pub fn is_masked(&self) -> bool {
+        self.mask_path.is_some()
+    }
+
+    pub fn aspect_ratio(&self) -> f32 {
+        let dim = self.dim();
+        dim.x as f32 / dim.y as f32
+    }
+
     pub async fn load(&self) -> image::ImageResult<DynamicImage> {
         let mut img_bytes = vec![];
+        self.fs
+            .reader_at_path(&self.path)
+            .await?
+            .read_to_end(&mut img_bytes)
+            .await?;
         let mut img = image::load_from_memory(&img_bytes)?;
 
+        // Copy over mask.
+        // TODO: Interleave this work better & speed things up here.
+        if let Some(mask_path) = &self.mask_path {
+            // Add in alpha channel if needed to the image to copy the mask into.
+            let mut masked_img = img.into_rgba8();
+            let mut mask_bytes = vec![];
+            self.fs
+                .reader_at_path(mask_path)
+                .await?
+                .read_to_end(&mut mask_bytes)
+                .await?;
+            let mask_img = image::load_from_memory(&mask_bytes)?;
+            if mask_img.color().has_alpha() {
+                let mask_img = mask_img.into_rgba8();
+                for (pixel, mask_pixel) in masked_img.pixels_mut().zip(mask_img.pixels()) {
+                    pixel[3] = mask_pixel[3];
+                }
+            } else {
+                let mask_img = mask_img.into_rgb8();
+                for (pixel, mask_pixel) in masked_img.pixels_mut().zip(mask_img.pixels()) {
+                    pixel[3] = mask_pixel[0];
+                }
+            }
+            img = masked_img.into();
+        }
         if img.width() <= self.max_res && img.height() <= self.max_res {
             return Ok(img);
         }
@@ -58,11 +119,34 @@ impl ImageFile {
     }
 }
 
-fn preliminary_data(path: &Path) -> image::ImageResult<(UVec2, ColorType)> {
-    let reader = ImageReader::open(path)?;
-    if let Ok(decoder) = reader.with_guessed_format()?.into_decoder() {
-        Ok((decoder.dimensions().into(), decoder.color_type()))
-    } else {
-        Err(ImageError::IoError(io::Error::new(ErrorKind::InvalidData, "Ngl I don't know about this image format")))
+async fn preliminary_data<R>(reader: &mut R) -> std::io::Result<(UVec2, ColorType)>
+    where R: AsyncRead + Unpin {
+    // The maximum size before the entire SOF of JPEG is read is 65548 bytes. Read 20kb to start, and grow if needed. More exotic image formats
+    // might need even more data, so loop below will keep reading until we can figure out the dimensions
+    // of the image.
+    let mut temp_buf = vec![0; 16387];
+
+    let mut n = 0;
+    loop {
+        let read = reader.read_exact(&mut temp_buf[n..]).await?;
+
+        if read == 0 {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::UnexpectedEof,
+                "Reached end of file while trying to decode image format",
+            ));
+        }
+
+        n += read;
+
+        // Try to decode with what we have (nb, no copying happens here).
+        if let Ok(decoder) = ImageReader::new(Cursor::new(&temp_buf[..n]))
+            .with_guessed_format()?
+            .into_decoder()
+        {
+            return Ok((decoder.dimensions().into(), decoder.color_type()));
+        }
+        // Try reading up to double the size.
+        temp_buf.resize(temp_buf.len() * 2, 0);
     }
 }

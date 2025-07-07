@@ -8,18 +8,21 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io;
 use std::io::{Error, ErrorKind};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use async_fn_stream::try_fn_stream;
 use burn::backend::wgpu::WgpuDevice;
+use futures::TryFutureExt;
 use glam::Vec3;
 use log::info;
+use thiserror::__private::AsDisplay;
+use path_clean::PathClean;
+use render::gaussian_splats::Splats;
 use render::sh::rgb_to_sh;
-use render::splat::Splats;
+use scene_source::Filesystem;
 use crate::config::LoadConfig;
 use crate::Dataset;
-use crate::filesystem::Filesystem;
-use crate::error::{DatasetError, FormatError, Result};
+use crate::error::FormatError;
 use crate::formats::colmap::camera::Camera;
 use crate::formats::colmap::image::Image;
 use crate::formats::colmap::input::{InputFile, InputType};
@@ -28,19 +31,23 @@ use crate::formats::DataStream;
 use crate::scene::{ImageFile, SceneView};
 use crate::scene::splat::{ParseMetadata, SplatMessage};
 
-pub async fn load(fs: Arc<Filesystem>, config: LoadConfig, device: &WgpuDevice) -> Result<(DataStream<SplatMessage>, Dataset)> {
-    let (cam_path, img_path, is_bin) = if let Some(path) = fs.file_ending_in("cameras.bin") {
-        let path = path.parent().expect("unreachable");
+pub async fn load(fs: Arc<Filesystem>, config: LoadConfig, device: &WgpuDevice) -> Result<(DataStream<SplatMessage>, Dataset), FormatError> {
+    let (cam_path, img_path, is_bin) = if let Some(file) = fs.files_ending_in("cameras.bin").next() {
+        let path = file.parent().expect("unreachable");
         (path.join("cameras.bin"), path.join("images.bin"), true)
-    } else if let Some(path) = fs.file_ending_in("cameras.txt") {
-        let path = path.parent().expect("unreachable");
+    } else if let Some(file) = fs.files_ending_in("cameras.txt").next() {
+        let path = file.parent().expect("unreachable");
         (path.join("cameras.txt"), path.join("images.txt"), false)
     } else {
-        return Err(DatasetError::from(FormatError::Io(String::from("Camera file could be found"))));
+        return Err(FormatError::Io(String::from("Camera file could be found")));
     };
-    
-    let cam_model_data = InputFile::new(cam_path, InputType::Cameras, is_bin).parse().await.unwrap().as_cameras().unwrap();
-    let img_infos = InputFile::new(img_path, InputType::Images, is_bin).parse().await.unwrap().as_images().unwrap();
+
+    info!("Located cameras file at: {}", cam_path.as_display());
+    info!("Located images file at: {}", img_path.as_display());
+    let cam_file = fs.reader_at_path(&cam_path).await?;
+    let cam_model_data = InputFile::new(cam_file, InputType::Cameras, is_bin).parse().await.unwrap().as_cameras().unwrap();
+    let img_file = fs.reader_at_path(&img_path).await?;
+    let img_infos = InputFile::new(img_file, InputType::Images, is_bin).parse().await.unwrap().as_images().unwrap();
 
     let mut img_info_list = img_infos.into_iter().collect::<Vec<_>>();
     img_info_list.sort_by_key(|key_img| key_img.1.name.clone());
@@ -51,20 +58,22 @@ pub async fn load(fs: Arc<Filesystem>, config: LoadConfig, device: &WgpuDevice) 
     let fs = fs.clone();
     let device = device.clone();
     let init_stream = try_fn_stream(|emitter| async move {
-        let points_path = fs.file_ending_in("points3d.txt")
-            .or_else(|| fs.file_ending_in("points3d.bin"));
+        let points_path = fs.files_ending_in("points3d.bin").next()
+            .or_else(|| fs.files_ending_in("points3d.txt").next());
 
         let Some(points_path) = points_path else {
-            return Ok(());
+            return Err(FormatError::Io("Could not find points file".parse().unwrap()));
         };
 
+        info!("Located points file at: {}", points_path.as_display());
         let is_binary = matches!(
             points_path.extension().and_then(|p| p.to_str()),
             Some("bin")
         );
 
         // Extract COLMAP sfm points.
-        let points_data = InputFile::new(points_path, InputType::Images, is_binary).parse().await.unwrap().as_points();
+        let points_file = fs.reader_at_path(&points_path).await.unwrap();
+        let points_data = InputFile::new(points_file, InputType::Points3D, is_binary).parse().await.unwrap().as_points();
 
         // Ignore empty points data.
         if let Some(points_data) = points_data {
@@ -115,7 +124,9 @@ pub async fn load(fs: Arc<Filesystem>, config: LoadConfig, device: &WgpuDevice) 
     ))
 }
 
-async fn create_views(fs: Arc<Filesystem>, cam_model_data: &HashMap<i32, Camera>, img_info_list: &Vec<(i32, Image)>, config: &LoadConfig) -> Result<(Vec<SceneView>, Vec<SceneView>)> {
+async fn create_views(fs: Arc<Filesystem>, cam_model_data: &HashMap<i32, Camera>, img_info_list: &Vec<(i32, Image)>, config: &LoadConfig)
+    -> Result<(Vec<SceneView>, Vec<SceneView>), FormatError>
+{
     let mut train_views = vec![];
     let mut eval_views = vec![];
 
@@ -141,17 +152,22 @@ async fn create_views(fs: Arc<Filesystem>, cam_model_data: &HashMap<i32, Camera>
         let cam_to_world = world_to_cam.inverse();
         let (_, quat, translation) = cam_to_world.to_scale_rotation_translation();
 
-        let camera = render::Camera::new(translation, quat, fovx, fovy, center_uv);
+        let camera = render::camera::Camera::new(translation, quat, fovx, fovy, center_uv);
 
-        let img_file = if let Some(img_path) = fs.file_ending_in(&img_info.name) {
-            Ok(ImageFile::new(img_path.as_path(), config.max_resolution))
+        let Some((img_path, mask_path)) = find_mask_and_img(&fs, &img_info.name) else {
+            log::warn!("Image not found: {}", img_info.name);
+            continue;
+        };
+
+        let img_file = if let Some(img_path) = fs.files_ending_in(&img_info.name).next() {
+            Ok(ImageFile::new(fs.clone(), &img_path, mask_path, config.max_resolution).await?)
         } else {
-            Err(DatasetError::from(FormatError::Io(format!("Image file {} not found", &img_info.name))))
-        }?.or_else(|err| {Err(DatasetError::from(FormatError::InvalidImage(err)))});
+            Err(FormatError::Io(format!("Image file {} not found", &img_info.name)))
+        }?;
 
         let view = SceneView {
             camera,
-            image: img_file?
+            image: img_file
         };
 
         if let Some(eval_period) = config.eval_split_every {
@@ -166,4 +182,50 @@ async fn create_views(fs: Arc<Filesystem>, cam_model_data: &HashMap<i32, Camera>
     }
     
     Ok((train_views, eval_views))
+}
+
+fn find_mask_and_img(fs: &Filesystem, name: &str) -> Option<(PathBuf, Option<PathBuf>)> {
+    // Colmap only specifies an image name, not a full path. We brute force
+    // search for the image in the archive.
+    //
+    // Make sure this path doesn't start with a '/' as the files_ending_in expects
+    // things in that format (like a "filename with slashes").
+    let name = name.strip_prefix('/').unwrap_or(name);
+
+    let paths: Vec<_> = fs.files_ending_in(name).collect();
+
+    let mut path_masks = HashMap::new();
+    let mut masks = vec![];
+
+    // First pass: collect images & masks.
+    for path in paths {
+        let mask = find_mask_path(fs, &path);
+        path_masks.insert(path.clone(), mask.clone());
+        if let Some(mask_path) = mask {
+            masks.push(mask_path);
+        }
+    }
+
+    // Remove masks from candidates - shouldn't count as an input image.
+    for mask in masks {
+        path_masks.remove(&mask);
+    }
+
+    // Sort and return the first candidate (alphabetically).
+    path_masks.into_iter().min_by_key(|kv| kv.0.clone())
+}
+
+fn find_mask_path(fs: &Filesystem, path: &Path) -> Option<PathBuf> {
+    let parent = path.parent()?.clean();
+    let file_stem = path.file_stem()?.to_str()?;
+    let masks_dir = parent.parent()?.join("masks").clean();
+    for candidate in fs.files_with_stem(file_stem) {
+        let Some(file_parent) = candidate.parent() else {
+            continue;
+        };
+        if file_parent == masks_dir {
+            return Some(candidate);
+        }
+    }
+    None
 }

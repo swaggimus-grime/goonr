@@ -1,8 +1,13 @@
 [package]
 name = "viewer"
-version = "0.1.0"
-edition = "2024"
+edition.workspace = true
+version.workspace = true
+readme.workspace = true
+license.workspace = true
 
 [dependencies]
-glam = { workspace = true }
-wgpu = { workspace = true }
+wgpu.workspace = true
+thiserror = { workspace = true }
+web-sys = { workspace = true, features = [
+    "HtmlCanvasElement"
+]}

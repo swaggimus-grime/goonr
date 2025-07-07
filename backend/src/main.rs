@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 use axum::{routing::get, routing::post, Router, ServiceExt};
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -11,10 +13,10 @@ use tracing_subscriber::fmt::layer;
 use crate::routes::api_routes;
 use crate::state::AppState;
 
-
 mod routes;
 mod state;
 mod error;
+mod pipeline;
 
 #[tokio::main]
 async fn main() {

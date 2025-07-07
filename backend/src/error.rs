@@ -22,8 +22,8 @@ pub enum BackendError {
     #[error("Tokio IO error")]
     TokioIo(#[from] tokio::io::Error),
     
-    #[error("Zip Extract error")]
-    Zip(#[from] zip_extract::ZipExtractError),
+    #[error("Zip Extract error: {0}")]
+    Zip(String),
 
     #[error("Pipeline error")]
     Pipeline(#[from] pipeline::PipelineError),
@@ -38,6 +38,7 @@ impl IntoResponse for BackendError {
             BackendError::TokioIo(_) => StatusCode::INTERNAL_SERVER_ERROR,
             BackendError::Zip(_) => StatusCode::BAD_REQUEST,
             BackendError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            BackendError::Pipeline(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
         (status, self.to_string()).into_response()

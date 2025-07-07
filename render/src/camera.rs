@@ -1,21 +1,21 @@
-use glam::{Vec2, Vec3, Quat, Affine3A};
+use glam::Affine3A;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct Camera {
     pub fov_x: f64,
     pub fov_y: f64,
-    pub center_uv: Vec2,
-    pub position: Vec3,
-    pub rotation: Quat,
+    pub center_uv: glam::Vec2,
+    pub position: glam::Vec3,
+    pub rotation: glam::Quat,
 }
 
 impl Camera {
     pub fn new(
-        position: Vec3,
-        rotation: Quat,
+        position: glam::Vec3,
+        rotation: glam::Quat,
         fov_x: f64,
         fov_y: f64,
-        center_uv: Vec2,
+        center_uv: glam::Vec2,
     ) -> Self {
         Self {
             fov_x,
@@ -48,7 +48,6 @@ impl Camera {
         self.local_to_world().inverse()
     }
 }
-
 // Converts field of view to focal length
 pub fn fov_to_focal(fov_rad: f64, pixels: u32) -> f64 {
     0.5 * (pixels as f64) / (fov_rad * 0.5).tan()

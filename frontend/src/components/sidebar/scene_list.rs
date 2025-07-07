@@ -1,15 +1,14 @@
 use gloo_console::info;
 use stylist::yew::styled_component;
-use uuid::Uuid;
 use web_sys::MouseEvent;
 use yew::{html, Callback, Html, NodeRef, Properties, UseStateHandle};
 use yew_router::prelude::use_navigator;
-use web_cmn::responses::scene::SceneMetadata;
+use web_cmn::scene::SceneResponse;
 use crate::route::Route;
 
 #[derive(Properties, PartialEq)]
 pub struct SceneListProps {
-    pub scenes: UseStateHandle<Vec<SceneMetadata>>,
+    pub scenes: UseStateHandle<Vec<SceneResponse>>,
 }
 
 #[styled_component(SceneList)]
@@ -26,16 +25,16 @@ pub fn scene_list(props: &SceneListProps) -> Html {
 
     html! {
         {
-            for props.scenes.iter().map(|metadata| {
-                let scene = metadata.clone();
+            for props.scenes.iter().map(|response| {
+                let scene = response.clone();
                 let navigator = navigator.clone();
                 let on_click = Callback::from(move |_: MouseEvent| {
-                    info!("Navigating to viewer with scene name: {}", &scene.name);
-                    navigator.push(&Route::Viewer { name: scene.name.clone() });
+                    info!("Navigating to viewer with scene name: ", &scene.name);
+                    navigator.push(&Route::Viewer { scene_name: scene.name.clone() });
                 });
 
                 let delete_scene = delete_scene.clone();
-                let s = metadata.clone();
+                let s = response.clone();
                 let on_click_delete = Callback::from(move |e: MouseEvent| {
                     e.stop_propagation(); // Prevents navigation when clicking delete
                     delete_scene.emit(s.name.clone());
@@ -46,7 +45,7 @@ pub fn scene_list(props: &SceneListProps) -> Html {
                         class="mb-2 cursor-pointer rounded p-2 hover:bg-gray-200 transition flex items-center justify-between group"
                         onclick={on_click}
                     >
-                        <span class="truncate">{ metadata.name.as_str() }</span>
+                        <span class="truncate">{ response.name.as_str() }</span>
                         <button
                             class="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                             onclick={on_click_delete}

@@ -4,8 +4,20 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+dataset = { path = "../dataset" }
+kernel.path = "../kernel"
+render = { path = "../render" }
+render-bwd.path = "../render-bwd"
+anyhow = { workspace = true }
 burn = { workspace = true }
+burn-cubecl = { workspace = true }
+burn-fusion = { workspace = true }
 burn-wgpu = { workspace = true }
 glam = { workspace = true }
+hashbrown.workspace = true
+image = { workspace = true }
+log.workspace = true
+rand.workspace = true
 serde = { workspace = true }
 tokio = { workspace = true }
+tracing = { workspace = true }

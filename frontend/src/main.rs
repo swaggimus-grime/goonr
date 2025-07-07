@@ -4,6 +4,8 @@ use yew_router::prelude::Link;
 
 mod components;
 mod route;
+mod services;
+mod error;
 
 use components::*;
 use crate::route::Route;

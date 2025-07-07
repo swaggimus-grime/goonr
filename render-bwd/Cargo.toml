@@ -1,0 +1,28 @@
+[package]
+name = "render-bwd"
+edition.workspace = true
+version.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[dependencies]
+render.path = "../render"
+kernel.path = "../kernel"
+
+burn.workspace = true
+burn-cubecl.workspace = true
+burn-fusion.workspace = true
+burn-ir.workspace = true
+
+naga_oil.workspace = true
+wgpu.workspace = true
+bytemuck.workspace = true
+glam.workspace = true
+tracing.workspace = true
+
+[build-dependencies]
+wgsl.path = "../wgsl"
+miette.workspace = true
+
+[lints]
+workspace = true

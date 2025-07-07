@@ -4,7 +4,22 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+kernel.path = "../kernel"
+prefix-sum.path = "../prefix-sum"
+sort.path = "../sort"
 burn = { workspace = true }
+burn-cubecl.workspace = true
 burn-fusion = { workspace = true }
+burn-ir.workspace = true
+burn-wgpu.workspace = true
+bytemuck.workspace = true
 glam = { workspace = true }
+naga_oil.workspace = true
+rand.workspace = true
+tracing.workspace = true
+wgpu.workspace = true
 ball-tree = "0.5.1"
+
+[build-dependencies]
+wgsl = { path = "../wgsl" }
+miette = { workspace = true }

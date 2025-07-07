@@ -1,15 +1,16 @@
-use glam::{Mat3, Mat4, Vec3};
-use crate::scene::{Scene, SceneView};
+// Needed for nested types in burn-wgpu
+#![recursion_limit = "512"]
 
 mod config;
 mod formats;
-mod filesystem;
-mod scene;
-mod error;
+pub mod scene;
+pub mod error;
 
+use crate::scene::{Scene};
+use glam::{Mat3, Mat4, Vec3};
 pub use formats::load_dataset;
 pub use config::LoadConfig;
-pub use error::DatasetError;
+pub use scene::{SceneView, SceneLoader, view_to_sample_image, sample_to_tensor};
 
 #[derive(Clone)]
 pub struct Dataset {

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::io;
 use std::path::PathBuf;
+use tokio::io::{AsyncRead, BufReader};
 use crate::formats::colmap::camera::Camera;
 use crate::formats::colmap::image::Image;
 use crate::formats::colmap::parse::{CamerasParser, ImagesParser, Parseable, Parser, PointsParser};
@@ -53,23 +54,13 @@ impl InputData {
 }
 
 pub struct InputFile {
+    reader: Box<dyn AsyncRead + Unpin + Send>,
     parser: Box<dyn Parseable>,
     input_format: InputFormat,
-    path: PathBuf,
 }
 
 impl InputFile {
-    /*
-    pub async fn new(parser: Box<dyn Parseable>, input_format: InputFormat, path: PathBuf) -> io::Result<Self> {
-        Ok(Self {
-            parser,
-            input_format,
-            path
-        })
-    }
-     */
-
-    pub fn new(path: PathBuf, input_type: InputType, is_bin: bool) -> InputFile {
+    pub fn new(reader: Box<dyn AsyncRead + Unpin + Send>, input_type: InputType, is_bin: bool) -> InputFile {
         let parser: Box<dyn Parseable> = match input_type {
             InputType::Cameras => Box::new(CamerasParser),
             InputType::Images => Box::new(ImagesParser),
@@ -77,18 +68,18 @@ impl InputFile {
         };
         
         Self {
-            path,
+            reader,
             input_format: if is_bin { InputFormat::Binary} else { InputFormat::Text },
             parser
         }
     }
 
-    pub async fn parse(&self) -> io::Result<InputData> {
-        let file = tokio::fs::File::open(self.path.clone()).await?;
-        let reader = tokio::io::BufReader::new(file);
-        match &self.input_format {
-            InputFormat::Binary => Ok(self.parser.parse_bin(reader).await?),
-            InputFormat::Text => Ok(self.parser.parse_txt(reader).await?)
+    pub async fn parse(self) -> io::Result<InputData> {
+        let mut reader = BufReader::new(self.reader);
+
+        match self.input_format {
+            InputFormat::Binary => self.parser.parse_bin(reader).await,
+            InputFormat::Text => self.parser.parse_txt(reader).await
         }
     }
 }

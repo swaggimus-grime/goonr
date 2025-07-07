@@ -1,20 +1,12 @@
-use burn_wgpu::WgpuDevice;
+#![recursion_limit = "256"]
 
-pub struct TrainContext {
-    device: WgpuDevice
-}
+pub mod config;
+pub mod eval;
+pub mod msg;
+pub mod train;
 
-impl TrainContext {
-    pub fn new() -> Self {
-        let device = WgpuDevice::default();
-        
-        Self {
-            device
-        }
-    }
-    
-    pub fn device(&self) -> &WgpuDevice {
-        &self.device
-    }
-}
-
+mod adam_scaled;
+mod multinomial;
+mod quat_vec;
+mod ssim;
+mod stats;

@@ -5,14 +5,18 @@ edition = "2024"
 
 [dependencies]
 render = { path = "../render" }
+scene-source = { path = "../scene-source" }
 async-fn-stream = { workspace = true }
 burn-wgpu = { workspace = true }
 futures = { workspace = true }
+image = { workspace = true }
 burn = { workspace = true }
 glam = { workspace = true }
 log = { workspace = true }
+path-clean.workspace = true
+rand.workspace = true
 serde = { workspace = true }
 tokio = { workspace = true }
 thiserror = { workspace = true }
-image = "0.25.6"
+tokio_with_wasm.workspace = true
 walkdir = "2.5.0"

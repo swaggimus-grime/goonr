@@ -1,121 +1,242 @@
-use axum::{extract::{State}, Extension, Json};
+use axum::{extract::State, Json};
 use std::{
     sync::Arc,
     path::PathBuf,
-    io::Cursor,
 };
-use std::fs::File;
-use axum::extract::{Multipart, Path};
-use axum::http::HeaderMap;
-use axum::response::{IntoResponse, Response};
-use serde::Serialize;
+use anyhow::Error;
+use axum::body::Body;
+use axum::extract::{FromRequest, Multipart, Path, Request};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
+use serde::{Serialize, Deserialize};
 use tempfile::tempdir;
+use tokio::fs;
 use tracing::{error, info};
-use uuid::Uuid;
 use zip_extract::extract;
-use db::repo::SplatRepository;
+use db::repo::{SceneMetadata, SplatRepository};
 use pipeline::Pipeline;
-use web_cmn::responses::scene::SceneMetadata;
-use crate::error::BackendError;
-use crate::state::{AppState};
+use web_cmn::scene::{SceneResponse};
+use crate::error::{Result, BackendError};
+use crate::state::AppState;
 
-#[axum::debug_handler]
+use scene_source::Source;
+
 pub async fn upload_scene(
     State(state): State<Arc<AppState>>,
-    mut multipart: Multipart,
-) -> Result<Json<SceneMetadata>, BackendError> {
-    info!("Received upload request");
+    req: Request<Body>
+) -> Result<Json<SceneResponse>> {
+    let content_type = req
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
 
-    let field = multipart
-        .next_field()
-        .await?
-        .ok_or_else(|| BackendError::BadRequest("Missing file".into()))?;
+    if content_type.contains("multipart/form-data") {
+        let multipart = Multipart::from_request(req, &state).await
+            .map_err(|_| BackendError::BadRequest("Failed to parse multipart data".into()))?;
 
-    if field.name() == Some("scene_zip") {
-        let file_name = field.file_name().unwrap().to_string();
-        let file_path = PathBuf::from(file_name.clone());
+        handle_multipart_upload(state, multipart).await
+    } else if content_type.contains("application/json") {
+        let Json(source) = axum::Json::<Source>::from_request(req, &state).await
+            .map_err(|_| BackendError::BadRequest("Failed to parse JSON data".into()))?;
 
-        let metadata = SceneMetadata {
-            name: file_name,
-            file_path
-        };
-
-        state.repo.add_scene(metadata.clone()).await.expect(format!("Failed to add scene: {}", metadata.name).as_str());
-
-        return Ok(Json(metadata));
+        handle_json_upload(state, source).await
+    } else {
+        Err(BackendError::BadRequest("Unsupported content type".into()))
     }
-
-    Err(BackendError::BadRequest("Missing scene_zip in form".into()))
 }
 
-pub async fn parse_scene(
-    State(state): State<Arc<AppState>>,
-    Path(scene_name): Path<String>
-) -> Result<(), BackendError> {
-    if let Some(metadata) = state.repo.get_scene(scene_name.clone()).await? {
-        let extract_dir = PathBuf::from(format!("data/scenes/{}", metadata.name));
-        std::fs::create_dir_all(&extract_dir)?;
-        
-        let file = File::open(metadata.file_path)?;
-        if let Err(e) = extract(file, &extract_dir, true) {
-            return Err(BackendError::Zip(e));
-        }
+async fn handle_multipart_upload(
+    state: Arc<AppState>,
+    mut multipart: Multipart
+) -> Result<Json<SceneResponse>> {
+    let mut base_path = None;
+    let mut scene_name = None;
+    let mut source = None;
+    while let Some(mut field) = multipart.next_field().await.unwrap_or(None) {
+        let field_name = field.name().unwrap_or_default().to_string();
+        let filename = field.file_name().unwrap_or("unknown").to_string();
+        let data = field.bytes().await
+            .map_err(|_| BackendError::BadRequest("Failed to read upload data".into()))?;
 
-        state.pipeline = Some(Arc::from(Pipeline::new(extract_dir)?));
-        
-        if let Some(pipeline) = &mut state.pipeline {
-            pipeline.launch();
+        if field_name == "name" {
+            let name = String::from_utf8_lossy(&data).to_string();
+            scene_name = Some(name.clone());
+            if state.repo.can_add(name.as_str()).await {
+                base_path = Some(format!("data/scenes/{}", name));
+                fs::create_dir_all(base_path.clone().unwrap()).await?;
+            } else {
+                return Err(BackendError::BadRequest(format!("Upload already exists: {}", name).into()));
+            }
+        } else if filename.ends_with(".zip") {
+            if let Some(dir) = base_path.clone() {
+                let zip_path = extract_zip_data(&data, dir.as_str()).await
+                    .map_err(|e| BackendError::Internal(Error::from(e)))?;
+                source = Some(Source::Zip {path: zip_path.to_string_lossy().to_string()});
+            }
+        } else {
+            if let Some(dir) = base_path.clone() {
+                copy_to_dir(&data, filename.as_str(), dir.as_str()).await?;
+
+                if source.is_none() {
+                    source = Some(Source::Dir { path: dir });
+                }
+            }
         }
-        
-        return Ok(());
     }
-    
+
+    if let Some(name) = scene_name {
+        let metadata = SceneMetadata {
+            name: name.clone(),
+            source: source.unwrap(),
+        };
+
+        state.repo.add_scene(metadata).await.expect(format!("Failed to add scene: {}", &name).as_str());
+
+        return Ok(Json(SceneResponse {
+            name
+        }));
+    }
+
+    Err(BackendError::BadRequest("Failed to parse multipart data".parse().unwrap()))
+}
+
+async fn handle_json_upload(
+    state: Arc<AppState>,
+    source: Source
+) -> Result<Json<SceneResponse>> {
+    match source {
+        Source::Url { url } => {
+            info!("Received URL upload: {}", url);
+
+            let final_source = download_and_process_url(&url).await
+                .map_err(|e| BackendError::Internal(e.into()))?;
+
+            let metadata = SceneMetadata {
+                name: url.clone(),
+                source: final_source,
+            };
+            
+            state.repo.add_scene(metadata.clone()).await?;
+            
+            Ok(Json(SceneResponse {
+                name: url,
+            }))
+        }
+        other => Err(BackendError::BadRequest(format!(
+            "Only Source::Url is supported via JSON. Got: {:?}", other
+        )))
+    }
+}
+
+async fn extract_zip_data(
+    data: &[u8],
+    extract_path: &str
+) -> Result<PathBuf> {
+    let zip_filename = "scene.zip";
+    let zip_path = PathBuf::from(format!("{}/{}", extract_path, zip_filename));
+
+    if let Some(parent) = zip_path.parent() {
+        // Spawn dir creation in the background
+        let parent = parent.to_path_buf();
+        let data = data.to_vec();
+        let zip_path_clone = zip_path.clone();
+        
+        tokio::spawn(async move {
+            let _ = tokio::fs::create_dir_all(parent).await;
+            let _ = tokio::fs::write(zip_path_clone, data).await;
+        });
+    }
+
+    Ok(zip_path)
+}
+
+fn sanitize_file_path(path: &str) -> String {
+    let normalized = path.replace('\\', "/");
+
+    let components: Vec<&str> = normalized
+        .split('/')
+        .filter(|component| {
+            !component.is_empty()
+                && *component != "."
+                && *component != ".."
+                && !component.starts_with('.')
+        })
+        .collect();
+
+    components.join("/")
+}
+
+async fn copy_to_dir(data: &[u8], file_path: &str, dir: &str) -> Result<()> {
+    let sanitized_path = sanitize_file_path(file_path);
+    let file_path = format!("{}/{}", dir, sanitized_path);
+
+    if let Some(parent) = PathBuf::from(&file_path).parent() {
+        fs::create_dir_all(parent).await
+            .map_err(|e| BackendError::Internal(e.into()))?;
+    }
+
+    tokio::fs::write(&file_path, &data).await
+        .map_err(|e| BackendError::Internal(e.into()))
+}
+
+async fn download_and_process_url(url: &str) -> Result<( Source)> {
+    let base_path = format!("data/scenes/{}", url);
+
+    fs::create_dir_all(&base_path).await.map_err(|e| BackendError::Internal(e.into()))?;
+
+    let response = reqwest::get(url).await.map_err(|e| BackendError::Internal(e.into()))?;
+    if !response.status().is_success() {
+        return Err(BackendError::BadRequest("Failed to download url".into()));
+    }
+
+    // Extract headers before consuming body
+    let content_type = response
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_string();
+
+    let data = response.bytes().await.map_err(|e| BackendError::Internal(e.into()))?;
+
+    let source = if content_type.contains("application/zip") || url.to_lowercase().ends_with(".zip") {
+        extract_zip_data(&data, &base_path).await.map_err(|e| BackendError::Internal(e.into()))?;
+        Source::Zip { path: base_path }
+    } else {
+        let filename = url.split('/').last().unwrap_or("downloaded_file");
+        let sanitized = sanitize_file_path(filename);
+        let file_path = format!("{}/{}", base_path, sanitized);
+        tokio::fs::write(&file_path, &data).await.map_err(|e| BackendError::Internal(e.into()))?;
+        Source::Dir { path: base_path }
+    };
+
+    Ok(source)
+}
+
+pub fn scene_metadata_to_response(metadata: SceneMetadata) -> SceneResponse {
+    SceneResponse {
+        name: metadata.name,
+    }
+}
+
+pub async fn get_scene(
+    State(state): State<Arc<AppState>>,
+    Path(name): Path<String>
+) -> Result<Json<SceneResponse>> {
+    if let Some(scene) = state.repo.get_scene(&name).await? { 
+        return Ok(Json(scene_metadata_to_response(scene)));
+    }
     Err(BackendError::NotFound)
 }
 
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-#[repr(C)]
-struct GpuPoint {
-    position: [f32; 3],
-    color: [f32; 3],
-}
-
-//pub async fn get_pointcloud(
-//    State(state): State<AppState>, // Note: Use Arc<AppState> if wrapped
-//    Path(scene_id): Path<Uuid>,
-//) -> axum::response::Response {
-//    let scenes = state.scenes.read().await;
-//    let scene = match scenes.get(&scene_id) {
-//        Some(scene) => scene,
-//        None => return Response::builder()
-//            .status(404)
-//            .body("Scene not found".into())
-//            .unwrap(),
-//    };
-//
-//    let points = scene.raw.points();
-//
-//    let gpu_points: Vec<GpuPoint> = points
-//        .values()
-//        .map(|p| GpuPoint {
-//            position: p.xyz.to_array(),
-//            color: [
-//                p.rgb[0] as f32 / 255.0,
-//                p.rgb[1] as f32 / 255.0,
-//                p.rgb[2] as f32 / 255.0,
-//            ],
-//        })
-//        .collect();
-//
-//    let bytes = bytemuck::cast_slice(&gpu_points).to_vec();
-//
-//    Response::builder()
-//        .header("Content-Type", "application/octet-stream")
-//        .body(bytes.into())
-//        .unwrap()
-//}
-
-pub async fn list_scenes(State(state): State<Arc<AppState>>) -> Json<Vec<SceneMetadata>> {
-    let scenes = state.repo.list_scenes().await.unwrap_or_default();
-    Json(scenes)
+pub async fn get_scenes(
+    State(state): State<Arc<AppState>>
+) -> Result<Json<Vec<SceneResponse>>> {
+    let scenes = state.repo.list_scenes().await?;
+    let responses = scenes
+        .into_iter()
+        .map(scene_metadata_to_response)
+        .collect();
+    Ok(Json(responses))
 }

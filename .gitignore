@@ -1,5 +1,7 @@
-target/
 .idea/
 frontend/dist/
 frontend/node_modules/
 frontend/output.css
+data/
+goonr.db/
+target/

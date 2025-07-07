@@ -19,8 +19,8 @@ pub enum Parser {
 type ParseResult = Pin<Box<dyn Future<Output = io::Result<InputData>> + Send>>;
 
 pub trait Parseable: Send + Sync {
-    fn parse_bin(&self, reader: BufReader<File>) -> ParseResult;
-    fn parse_txt(&self, reader: BufReader<File>) -> ParseResult;
+    fn parse_bin(&self, reader: BufReader<Box<dyn AsyncRead + Unpin + Send>>) -> ParseResult;
+    fn parse_txt(&self, reader: BufReader<Box<dyn AsyncRead + Unpin + Send>>) -> ParseResult;
 }
 
 fn parse<T: std::str::FromStr>(s: &str) -> io::Result<T> {
@@ -33,7 +33,7 @@ pub struct ImagesParser;
 pub struct CamerasParser;
 
 impl Parseable for ImagesParser {
-    fn parse_bin(&self, mut reader: BufReader<File>) -> ParseResult {
+    fn parse_bin(&self, mut reader: BufReader<Box<dyn AsyncRead + Unpin + Send>>) -> ParseResult {
         Box::pin(async move {
             let mut images = HashMap::new();
             let num_images = reader.read_u64_le().await?;
@@ -92,17 +92,16 @@ impl Parseable for ImagesParser {
         })
     }
 
-    fn parse_txt(&self, mut reader: BufReader<File>) -> ParseResult {
+    fn parse_txt(&self, mut reader: BufReader<Box<dyn AsyncRead + Unpin + Send>>) -> ParseResult {
         Box::pin(async move {
             let mut images = HashMap::new();
-            let mut buf_reader = tokio::io::BufReader::new(reader);
             let mut line = String::new();
 
             let mut img_data = true;
 
             loop {
                 line.clear();
-                if buf_reader.read_line(&mut line).await? == 0 {
+                if reader.read_line(&mut line).await? == 0 {
                     break;
                 }
 
@@ -122,7 +121,7 @@ impl Parseable for ImagesParser {
                     let name = elems[9].to_owned();
 
                     line.clear();
-                    buf_reader.read_line(&mut line).await?;
+                    reader.read_line(&mut line).await?;
                     let elems: Vec<&str> = line.split_whitespace().collect();
                     let mut xys = Vec::new();
                     let mut point3d_ids = Vec::new();
@@ -152,7 +151,7 @@ impl Parseable for ImagesParser {
 }
 
 impl Parseable for PointsParser {
-    fn parse_bin(&self, mut reader: BufReader<File>) -> ParseResult {
+    fn parse_bin(&self, mut reader: BufReader<Box<dyn AsyncRead + Unpin + Send>>) -> ParseResult {
         Box::pin(async move {
             let mut points3d = HashMap::new();
             let num_points = reader.read_u64_le().await?;
@@ -196,13 +195,12 @@ impl Parseable for PointsParser {
         })
     }
 
-    fn parse_txt(&self, mut reader: BufReader<File>) -> ParseResult {
+    fn parse_txt(&self, mut reader: BufReader<Box<dyn AsyncRead + Unpin + Send>>) -> ParseResult {
         Box::pin(async move {
             let mut points3d = HashMap::new();
-            let mut buf_reader = tokio::io::BufReader::new(reader);
             let mut line = String::new();
 
-            while buf_reader.read_line(&mut line).await? > 0 {
+            while reader.read_line(&mut line).await? > 0 {
                 if line.starts_with('#') {
                     line.clear();
                     continue;
@@ -258,7 +256,7 @@ impl Parseable for PointsParser {
 }
 
 impl Parseable for CamerasParser {
-    fn parse_bin(&self, mut reader: BufReader<File>) -> ParseResult {
+    fn parse_bin(&self, mut reader: BufReader<Box<dyn AsyncRead + Unpin + Send>>) -> ParseResult {
         Box::pin(async move {
             let mut cameras = HashMap::new();
             let num_cameras = reader.read_u64_le().await?;
@@ -294,13 +292,12 @@ impl Parseable for CamerasParser {
         })
     }
 
-    fn parse_txt(&self, mut reader: BufReader<File>) -> ParseResult {
+    fn parse_txt(&self, mut reader: BufReader<Box<dyn AsyncRead + Unpin + Send>>) -> ParseResult {
         Box::pin(async move {
             let mut cameras = HashMap::new();
-            let mut buf_reader = tokio::io::BufReader::new(reader);
             let mut line = String::new();
 
-            while buf_reader.read_line(&mut line).await? > 0 {
+            while reader.read_line(&mut line).await? > 0 {
                 if line.starts_with('#') {
                     line.clear();
                     continue;

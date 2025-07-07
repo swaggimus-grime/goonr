@@ -1,17 +1,11 @@
 use async_fn_stream::{try_fn_stream, StreamEmitter, TryFnStream, TryStreamEmitter};
 use async_trait::async_trait;
 use futures::Stream;
+use futures::stream::BoxStream;
 use crate::error::PipelineError;
-use crate::message::Message;
+use crate::message::PipelineMessage;
 
 #[async_trait]
-pub trait PipelineStream {
-    async fn run(&mut self, emitter: TryStreamEmitter<Message, anyhow::Error>) -> anyhow::Result<()>;
-    
-    fn launch(&mut self) -> impl Stream<Item = Result<Message, anyhow::Error>>  {
-        try_fn_stream(|emitter| async move {
-            self.run(emitter).await?;
-            Ok(())
-        })
-    }
+pub trait PipelineStream: Send {
+    async fn run(&mut self, emitter: TryStreamEmitter<PipelineMessage, anyhow::Error>) -> anyhow::Result<()>;
 }

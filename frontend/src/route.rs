@@ -1,13 +1,13 @@
 use yew::{html, Html};
 use yew_router::Routable;
-use crate::components::viewer::Viewer;
+use crate::components::viewer_canvas::ViewerCanvas;
 
 #[derive(Routable, Clone, PartialEq)]
 pub enum Route {
     #[at("/")]
     Home,
-    #[at("/viewer/:name")]
-    Viewer { name: String },
+    #[at("/viewer/:scene_name")]
+    Viewer { scene_name: String },
     #[at("/scenes")]
     Scenes,
 }
@@ -15,7 +15,7 @@ pub enum Route {
 pub(crate) fn switch(route: Route) -> Html {
     match route {
         Route::Home => html! { "Home" },
-        Route::Viewer { name } => html! { <Viewer scene_name={name} /> },
-        Route::Scenes => html! { "View scene metadata" },
+        Route::Viewer { scene_name } => html! { <ViewerCanvas scene_name={scene_name} /> },
+        Route::Scenes => html! { "View scene-source metadata" },
     }
 }
