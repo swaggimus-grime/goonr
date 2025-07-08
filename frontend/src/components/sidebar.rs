@@ -30,6 +30,8 @@ pub fn sidebar(props: &SidebarProps) -> Html {
     
     html! {
         <aside class={classes!(
+            "relative",
+            "z-20",
             "h-screen",
             "bg-green",
             "border-r",
@@ -38,6 +40,8 @@ pub fn sidebar(props: &SidebarProps) -> Html {
             "flex-col",
             "transition-all",
             "duration-300",
+            "ease-in-out",
+            "overflow-hidden",
             if *collapsed { "w-16" } else { "w-60" }
         )}>
             // Top hamburger
@@ -58,14 +62,14 @@ pub fn sidebar(props: &SidebarProps) -> Html {
                         { nav_item(Route::Home, "🏠", "Home") }
                         { nav_item(Route::Scenes, "📚", "Scenes") }
                         <hr class="my-2 border-gray-300" />
-                        <div class="mt-4 px-2 overflow-y-auto max-h-64">
+                        <div class="mt-4 px-2 overflow-auto max-h-64">
                             <SceneUploadBtn
                                 scenes = {props.scenes.clone()}
                                 on_click = {props.on_upload_click.clone()}
                             />
                         </div>
                         <hr class="my-2 border-gray-300" />
-                        <div class="mt-4 px-2 overflow-y-auto max-h-64">
+                        <div class="mt-4 px-2 overflow-auto max-h-64">
                             <SceneList
                                 scenes = {props.scenes.clone()}
                             />

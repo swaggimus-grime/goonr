@@ -1,14 +1,19 @@
-mod error;
+pub mod error;
 mod splats;
+mod renderer;
 
 use web_sys::HtmlCanvasElement;
+use wgpu::StoreOp;
+use web_cmn::splats::RawSplats;
 use crate::error::{ViewerError, Result};
+use crate::renderer::Renderer;
 
 pub struct Context<'window> {
     instance: wgpu::Instance,
     surface: wgpu::Surface<'window>,
     device: wgpu::Device,
     queue: wgpu::Queue,
+    renderer: Renderer,
 }
 
 impl<'window> Context<'window> {
@@ -51,12 +56,72 @@ impl<'window> Context<'window> {
         };
         surface.configure(&device, &config);
 
+        let renderer = Renderer::new(&device, config.format);
+
         Ok(Self {
             instance,
             surface,
             device,
-            queue
+            queue,
+            renderer,
         })
     }
+
+    pub fn draw_splats(&mut self, splats: RawSplats) {
+        self.renderer.upload_splats(&self.device, &splats);
+
+        // Step 2: Get current frame
+        let output = match self.surface.get_current_texture() {
+            Ok(frame) => frame,
+            Err(err) => {
+                eprintln!("Dropped frame: {err}");
+                return;
+            }
+        };
+        let view = output
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+
+        // Step 3: Begin encoder and render pass
+        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Render Encoder"),
+        });
+
+        {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Splat Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.0,
+                            g: 0.0,
+                            b: 0.0,
+                            a: 1.0,
+                        }),
+                        store: StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+
+            if let (Some(pipeline), Some(vertex_buffer)) = (
+                &self.renderer.pipeline,
+                &self.renderer.vertex_buffer,
+            ) {
+                render_pass.set_pipeline(pipeline);
+                render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
+                render_pass.draw(0..self.renderer.vertex_count as u32, 0..1);
+            }
+        }
+
+        // Step 4: Submit to GPU and present
+        self.queue.submit(Some(encoder.finish()));
+        output.present();
+    }
 }
+
 

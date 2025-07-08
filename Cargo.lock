@@ -2618,8 +2618,10 @@ name = "frontend"
 version = "0.1.0"
 dependencies = [
  "futures-util",
+ "glam",
  "gloo 0.11.0",
  "gloo-console 0.3.0",
+ "gloo-events 0.2.0",
  "gloo-file 0.3.0",
  "gloo-net 0.6.0",
  "serde",
@@ -8794,7 +8796,9 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 name = "viewer"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "thiserror 2.0.12",
+ "web-cmn",
  "web-sys",
  "wgpu",
 ]

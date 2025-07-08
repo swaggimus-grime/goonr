@@ -1,5 +1,5 @@
 mod sidebar;
-pub(crate) mod viewer_canvas;
+pub(crate) mod viewer;
 mod scene_manager;
 mod forms;
 
@@ -52,7 +52,7 @@ pub fn app() -> Html {
         <>
             <div class="min-h-screen bg-gradient-to-br from-[#c0f0ff] via-[#a0e0ff] to-[#c8ffe0] font-frutiger text-gray-900 dark:text-white p-8">
                 <BrowserRouter>
-                    <div class="flex">
+                    <div class="flex relative z-0 h-screen">
                         <MainSidebar
                             scenes = {scenes.clone()}
                             on_upload_click={Callback::from({
@@ -60,7 +60,7 @@ pub fn app() -> Html {
                                 move |_| show_upload_modal.set(true)
                             })}
                         />
-                        <main class="flex-1 p-4 bg-gray-50">
+                        <main class="flex-1 min-h-0 overflow-hidden relative flex flex-col">
                             <Switch<Route> render={route::switch} />
                         </main>
                     </div>

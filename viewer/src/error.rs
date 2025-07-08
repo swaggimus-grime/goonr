@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-pub type Result<T> = std::result::Result<T, ViewerError>;
+pub(crate) type Result<T> = std::result::Result<T, ViewerError>;
 
 #[derive(Debug, Error)]
 pub enum ViewerError {

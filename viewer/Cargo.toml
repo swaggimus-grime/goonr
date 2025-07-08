@@ -6,7 +6,9 @@ readme.workspace = true
 license.workspace = true
 
 [dependencies]
-wgpu.workspace = true
+web-cmn.path = "../web-cmn"
+bytemuck.workspace = true
+wgpu = { workspace = true, default-features = false, features = ["wgsl", "webgpu"]}
 thiserror = { workspace = true }
 web-sys = { workspace = true, features = [
     "HtmlCanvasElement"
