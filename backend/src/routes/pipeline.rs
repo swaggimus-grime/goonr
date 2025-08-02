@@ -32,19 +32,15 @@ async fn start_pipeline(
     scene_name: String,
     state: Arc<AppState>,
 ) {
-    // Create a channel for sending pipeline messages to the socket
-    let (send, mut recv) =
-        mpsc::unbounded_channel::<anyhow::Result<PipelineMessage>>();
-
     // Start training
     if let Some(scene) = state.repo.get_scene(&scene_name).await.unwrap() {
         let mut pipeline = Pipeline::new(scene.source).unwrap();
-        let mut stream = std::pin::pin!(pipeline.launch(send).await);
+        let mut stream = std::pin::pin!(pipeline.launch());
         while let Some(msg) = stream.next().await {
             match msg {
                 Ok(msg) => {
                     info!("Received pipeline message: {:?}", msg);
-                    if let Some(wired_msg) = create_wired_msg(msg).await {
+                    if let Some(wired_msg) = create_wired_msg(msg) {
                         let json = serde_json::to_string(&wired_msg).unwrap();
                         if socket.send(Message::from(json)).await.is_err() {
                             break;
@@ -60,31 +56,6 @@ async fn start_pipeline(
                 }
             }
         }
-
-        // Forward messages from pipeline to socket
-        //loop {
-        //    if let Some(msg) = recv.recv().await {
-        //        match msg {
-        //            Ok(msg) => {
-        //                info!("Received pipeline message: {:?}", msg);
-        //                if let Some(wired_msg) = create_wired_msg(msg).await {
-        //                    let json = serde_json::to_string(&wired_msg).unwrap();
-        //                    if socket.send(Message::from(json)).await.is_err() {
-        //                        break;
-        //                    }
-//
-        //                    if matches!(wired_msg, WiredPipelineMessage::Done) {
-        //                        break;
-        //                    }
-        //                }
-        //            }
-        //            Err(err) => {
-        //                error!("Training websocket loop failed due to invalid message: {}", err);
-        //                break;
-        //            }
-        //        }
-        //    }
-        //}
     } else {
         // send a failure message over WebSocket
         let _ = socket.send(Message::from("{\"error\": \"Scene not found\"}")).await;
@@ -93,8 +64,7 @@ async fn start_pipeline(
     let _ = socket.close().await;
     info!("End of pipeline websocket");
 }
-
-async fn create_wired_msg(msg: PipelineMessage) -> Option<WiredPipelineMessage> {
+fn create_wired_msg(msg: PipelineMessage) -> Option<WiredPipelineMessage> {
     match msg {
         PipelineMessage::TrainStep {
             splats,

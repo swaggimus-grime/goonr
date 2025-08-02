@@ -3,6 +3,8 @@ use web_sys::{KeyboardEvent, MouseEvent, HtmlCanvasElement};
 use std::rc::Rc;
 use std::cell::RefCell;
 use glam::{Vec2, Vec3};
+use gloo::utils::window;
+use gloo_console::log;
 use wasm_bindgen::JsCast;
 
 #[derive(Default)]
@@ -28,7 +30,7 @@ impl InputController {
 
         // Clone handles for events
         let state_kb = state.clone();
-        listeners.push(EventListener::new(&canvas, "keydown", move |e| {
+        listeners.push(EventListener::new(&window(), "keydown", move |e| {
             let event = e.dyn_ref::<KeyboardEvent>().unwrap();
             let mut s = state_kb.borrow_mut();
             match event.key().as_str() {
@@ -41,7 +43,7 @@ impl InputController {
         }));
 
         let state_kb = state.clone();
-        listeners.push(EventListener::new(&canvas, "keyup", move |e| {
+        listeners.push(EventListener::new(&window(), "keyup", move |e| {
             let event = e.dyn_ref::<KeyboardEvent>().unwrap();
             let mut s = state_kb.borrow_mut();
             match event.key().as_str() {
@@ -71,7 +73,12 @@ impl InputController {
             let event = e.dyn_ref::<MouseEvent>().unwrap();
             let mut s = state_mouse.borrow_mut();
             let current = Vec2::new(event.client_x() as f32, event.client_y() as f32);
-            s.mouse_delta = current - s.last_mouse_pos;
+            if s.mouse_pressed {
+                // Calculate delta only if pressed, otherwise zero delta (or ignore)
+                s.mouse_delta = current - s.last_mouse_pos;
+            } else {
+                s.mouse_delta = Vec2::ZERO;
+            }
             s.last_mouse_pos = current;
         }));
 
@@ -80,37 +87,4 @@ impl InputController {
             _listeners: listeners,
         }
     }
-
-    //pub fn update_camera(&self, camera: &mut Camera, dt: f32) {
-    //    let mut state = self.state.borrow_mut();
-    //    let speed = 2.0;
-//
-    //    let dir = camera.forward(); // assume your camera has forward/right/up methods
-    //    let right = camera.right();
-    //    let mut move_vec = Vec3::ZERO;
-//
-    //    if state.forward {
-    //        move_vec += dir;
-    //    }
-    //    if state.backward {
-    //        move_vec -= dir;
-    //    }
-    //    if state.left {
-    //        move_vec -= right;
-    //    }
-    //    if state.right {
-    //        move_vec += right;
-    //    }
-//
-    //    camera.position += move_vec * speed * dt;
-//
-    //    if state.mouse_pressed {
-    //        let delta = state.mouse_delta;
-    //        camera.yaw += delta.x * 0.002;
-    //        camera.pitch -= delta.y * 0.002;
-    //        camera.clamp_pitch();
-    //    }
-//
-    //    state.mouse_delta = Vec2::ZERO;
-    //}
 }

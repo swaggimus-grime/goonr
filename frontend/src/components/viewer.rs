@@ -1,17 +1,17 @@
 mod state;
 mod input;
 
-use std::cell::RefCell;
-use std::ops::DerefMut;
-use std::rc::Rc;
-use gloo_console::{debug, error, log};
+use std::{cell::RefCell, ops::DerefMut, rc::Rc};
+
+use gloo_console::{error, log};
 use gloo_net::websocket::{futures::WebSocket, Message};
 use stylist::yew::styled_component;
-use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::HtmlCanvasElement;
 use yew::prelude::*;
-use futures_util::StreamExt;
+use futures_util::{StreamExt, TryFutureExt};
+use gloo::utils::window;
 
 use viewer::Context;
 use web_cmn::pipeline::WiredPipelineMessage;
@@ -20,6 +20,12 @@ use crate::components::viewer::state::ViewerState;
 #[derive(Properties, PartialEq)]
 pub struct ViewerProps {
     pub scene_name: String,
+}
+
+fn request_animation_frame(f: &Closure<dyn FnMut(f64)>) {
+    window()
+        .request_animation_frame(f.as_ref().unchecked_ref())
+        .expect("should register `requestAnimationFrame` OK");
 }
 
 #[styled_component(Viewer)]
@@ -35,6 +41,29 @@ pub fn viewer(props: &ViewerProps) -> Html {
             spawn_local(async move {
                 if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
                     *state.borrow_mut() = Some(ViewerState::new(canvas).await.unwrap());
+
+                    let f = Rc::new(RefCell::new(None));
+                    let g = f.clone();
+                    let prev_time = Rc::new(RefCell::new(None));
+                    let prev_time_clone = prev_time.clone();
+                    *g.borrow_mut() = Some(Closure::new(move |now: f64| {
+                        if let Some(state) = state.borrow_mut().deref_mut() {
+                            let delta = prev_time_clone
+                                .borrow()
+                                .map(|last| (now - last) as f32)
+                                .unwrap_or(0.0);
+
+                            state.update_camera_from_input(delta);
+                            state.render();
+                        }
+
+                        *prev_time.borrow_mut() = Some(now);
+
+                        // Schedule ourself for another requestAnimationFrame callback.
+                        request_animation_frame(f.borrow().as_ref().unwrap());
+                    }));
+
+                    request_animation_frame(g.borrow().as_ref().unwrap());
                 }
             });
             || ()
@@ -60,7 +89,6 @@ pub fn viewer(props: &ViewerProps) -> Html {
 
                         log!("Entering training loop");
                         while let Some(msg) = read.next().await {
-                            log!("New message");
                             match msg {
                                 Ok(Message::Text(json)) => {
                                     match serde_json::from_str::<WiredPipelineMessage>(&json) {

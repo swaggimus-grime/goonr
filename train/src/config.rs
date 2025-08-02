@@ -6,7 +6,7 @@ pub struct TrainConfig {
     pub sh_degree: u32,
 
     /// Total number of steps to train for.
-    #[config(default = 1000)]
+    #[config(default = 30000)]
     pub total_steps: u32,
 
     /// Max nr. of splats. This is an upper bound, but the actual final number of splats might be lower than this.

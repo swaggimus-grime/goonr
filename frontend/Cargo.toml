@@ -15,25 +15,11 @@ futures-util = "0.3.31"
 stylist = { version = "0.13.0", features = ["yew_integration"]}
 yew = { version = "0.21", features = ["csr"] }
 yew-router = "0.18.0"
-web-sys = { workspace = true, features = [
-    "KeyboardEvent",
-    "MouseEvent",
-    "HtmlCanvasElement",
-    "HtmlSelectElement",
-    "Window",
-    "Document",
-    "Element",
-    "HtmlElement",
-    "console",
-    "Request",
-    "RequestInit",
-    "FormData",
-    "Blob"
-] }
+web-sys = { workspace = true, features = ["KeyboardEvent", "MouseEvent", "HtmlCanvasElement", "HtmlSelectElement", "Window", "Document", "Element", "HtmlElement", "console", "Request", "RequestInit", "FormData", "Blob", "Performance"], version = "1.0.0" }
 wasm-bindgen-futures = "0.4.50"
 wasm-bindgen = "0.2.100"
 wasm-logger = "0.2.0"
-gloo = "0.11.0"
+gloo = { version = "0.11.0", features = ["render"] }
 gloo-console = "0.3.0"
 gloo-events = "0.2.0"
 gloo-file = "0.3.0"

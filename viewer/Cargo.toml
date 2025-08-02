@@ -8,7 +8,8 @@ license.workspace = true
 [dependencies]
 web-cmn.path = "../web-cmn"
 bytemuck.workspace = true
-wgpu = { workspace = true, default-features = false, features = ["wgsl", "webgpu"]}
+glam.workspace = true
+wgpu = { workspace = true, default-features = false, features = ["wgsl", "webgpu"] }
 thiserror = { workspace = true }
 web-sys = { workspace = true, features = [
     "HtmlCanvasElement"

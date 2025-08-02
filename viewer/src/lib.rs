@@ -1,19 +1,27 @@
 pub mod error;
 mod splats;
 mod renderer;
+mod camera;
+mod quad;
 
+use glam::Vec3;
 use web_sys::HtmlCanvasElement;
 use wgpu::StoreOp;
+use wgpu::util::DeviceExt;
 use web_cmn::splats::RawSplats;
-use crate::error::{ViewerError, Result};
-use crate::renderer::Renderer;
+use crate::camera::Camera;
+use crate::error::{Result, ViewerError};
+pub use crate::renderer::Renderer;
+use crate::splats::{GpuSplat, GpuSplats};
 
 pub struct Context<'window> {
     instance: wgpu::Instance,
     surface: wgpu::Surface<'window>,
     device: wgpu::Device,
     queue: wgpu::Queue,
-    renderer: Renderer,
+    config: wgpu::SurfaceConfiguration,
+    gpu_splats: Option<GpuSplats>,
+    pub camera: Camera
 }
 
 impl<'window> Context<'window> {
@@ -22,7 +30,7 @@ impl<'window> Context<'window> {
             backends: wgpu::Backends::all(),
             ..Default::default()
         });
-        
+
         let (width, height) = (canvas.width(), canvas.height());
 
         let surface = instance
@@ -44,6 +52,9 @@ impl<'window> Context<'window> {
             .expect("Failed to get device");
 
         let surface_caps = surface.get_capabilities(&adapter);
+        let format = surface_caps.formats[0];
+
+        let surface_caps = surface.get_capabilities(&adapter);
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_caps.formats[0],
@@ -56,72 +67,58 @@ impl<'window> Context<'window> {
         };
         surface.configure(&device, &config);
 
-        let renderer = Renderer::new(&device, config.format);
+        let aspect = config.width as f32 / config.height as f32;
+        let camera = Camera::new(aspect);
 
         Ok(Self {
             instance,
             surface,
             device,
             queue,
-            renderer,
+            config,
+            gpu_splats: None,
+            camera
         })
     }
 
-    pub fn draw_splats(&mut self, splats: RawSplats) {
-        self.renderer.upload_splats(&self.device, &splats);
+    pub fn resize(&mut self, new_width: u32, new_height: u32) {
+        if new_width == 0 || new_height == 0 {
+            return; // Avoid resizing to invalid size
+        }
 
-        // Step 2: Get current frame
-        let output = match self.surface.get_current_texture() {
+        self.config.width = new_width;
+        self.config.height = new_height;
+        self.surface.configure(&self.device, &self.config);
+    }
+
+    pub fn upload_splats(&mut self, raw: &RawSplats) {
+        self.gpu_splats = Some(GpuSplats::from_raw(&self.device, raw));
+    }
+
+    pub fn render_frame(&mut self, renderer: &Renderer) {
+        let frame = match self.surface.get_current_texture() {
             Ok(frame) => frame,
-            Err(err) => {
-                eprintln!("Dropped frame: {err}");
-                return;
+            Err(_) => {
+                self.surface.configure(&self.device, &self.config);
+                self.surface
+                    .get_current_texture()
+                    .expect("Failed to acquire next swap chain texture")
             }
         };
-        let view = output
+
+        let view = frame
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
-        // Step 3: Begin encoder and render pass
-        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Render Encoder"),
-        });
-
-        {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Splat Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.0,
-                            g: 0.0,
-                            b: 0.0,
-                            a: 1.0,
-                        }),
-                        store: StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("Render Encoder"),
             });
 
-            if let (Some(pipeline), Some(vertex_buffer)) = (
-                &self.renderer.pipeline,
-                &self.renderer.vertex_buffer,
-            ) {
-                render_pass.set_pipeline(pipeline);
-                render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-                render_pass.draw(0..self.renderer.vertex_count as u32, 0..1);
-            }
-        }
+        renderer.render(&view, &mut encoder, self);
 
-        // Step 4: Submit to GPU and present
         self.queue.submit(Some(encoder.finish()));
-        output.present();
+        frame.present();
     }
 }
-
-

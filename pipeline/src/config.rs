@@ -15,7 +15,7 @@ pub struct PipelineConfig {
     pub eval_every: u32,
     
     /// Save the rendered eval images to disk. Uses export-path for the file location.
-    #[config(default = false)]
+    #[config(default = true)]
     pub eval_save_to_disk: bool,
 
     /// Export every this many steps.

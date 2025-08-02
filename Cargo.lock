@@ -8797,6 +8797,7 @@ name = "viewer"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
+ "glam",
  "thiserror 2.0.12",
  "web-cmn",
  "web-sys",

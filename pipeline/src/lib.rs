@@ -8,9 +8,11 @@ use burn_wgpu::{WgpuDevice, WgpuRuntime};
 use futures::{Stream, StreamExt};
 use futures::stream::BoxStream;
 use tokio::sync::mpsc::UnboundedSender;
+use dataset::LoadConfig;
 use scene_source::Source;
+use train::config::TrainConfig;
+use crate::config::PipelineConfig;
 use crate::pipeline_stream::PipelineStream;
-use crate::train_stream::TrainStream;
 use crate::view_stream::ViewStream;
 
 pub use crate::error::PipelineError;
@@ -39,8 +41,7 @@ impl Pipeline {
         })
     }
 
-    pub async fn launch(&mut self, send: UnboundedSender<anyhow::Result<PipelineMessage>>)
-        -> impl Stream<Item = Result<PipelineMessage, anyhow::Error>>
+    pub fn launch(&mut self) -> impl Stream<Item = Result<PipelineMessage, anyhow::Error>> + 'static
     {
         let device = self.device.clone();
         let source = self.source.clone();
@@ -54,24 +55,16 @@ fn process_stream(source: Source, device: WgpuDevice) -> impl Stream<Item = Resu
         log::info!("Starting process with source {source:?}");
         emitter.emit(PipelineMessage::NewSource).await;
 
-        //let vfs = Arc::new(source.clone().into_fs().await?);
-
         let client = WgpuRuntime::client(&device);
         // Start with memory cleared out.
         client.memory_cleanup();
 
-        /**
-        if vfs_counts == ply_count {
-            drop(process_args);
-            view_stream(vfs, device, emitter).await?;
-        } else {
-            // Receive the processing args.
-            train_stream(vfs, process_args, device, emitter).await?;
-        };
-        */
-
-        let mut stream = TrainStream::new(source, device);
-        stream.run(emitter).await?;
+        let mut load_config = LoadConfig::new();
+        load_config.eval_split_every = Some(8);
+        let mut pipeline_config = PipelineConfig::new();
+        pipeline_config.export_path = String::from("eval");
+        let train_config = TrainConfig::new();
+        train_stream::run(source, load_config, pipeline_config, train_config, device, emitter).await?;
 
         log::info!("Completed train stream");
         Ok(())
