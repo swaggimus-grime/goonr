@@ -3,7 +3,9 @@ mod splats;
 mod renderer;
 mod camera;
 mod quad;
+mod surface;
 
+use std::ops::Deref;
 use glam::Vec3;
 use web_sys::HtmlCanvasElement;
 use wgpu::StoreOp;
@@ -13,13 +15,13 @@ use crate::camera::Camera;
 use crate::error::{Result, ViewerError};
 pub use crate::renderer::Renderer;
 use crate::splats::{GpuSplat, GpuSplats};
+use crate::surface::Surface;
 
 pub struct Context<'window> {
     instance: wgpu::Instance,
-    surface: wgpu::Surface<'window>,
+    surface: Surface<'window>,
     device: wgpu::Device,
     queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
     gpu_splats: Option<GpuSplats>,
     pub camera: Camera
 }
@@ -31,16 +33,12 @@ impl<'window> Context<'window> {
             ..Default::default()
         });
 
-        let (width, height) = (canvas.width(), canvas.height());
-
-        let surface = instance
-            .create_surface(wgpu::SurfaceTarget::Canvas(canvas))
-            .expect("Failed to create surface");
+        let surface = Surface::from_canvas(&instance, canvas);
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::HighPerformance,
-                compatible_surface: Some(&surface),
+                compatible_surface: Some(surface.deref()),
                 force_fallback_adapter: false,
             })
             .await
@@ -52,20 +50,16 @@ impl<'window> Context<'window> {
             .expect("Failed to get device");
 
         let surface_caps = surface.get_capabilities(&adapter);
-        let format = surface_caps.formats[0];
-
-        let surface_caps = surface.get_capabilities(&adapter);
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_caps.formats[0],
-            width,
-            height,
+            width: surface.width(),
+            height: surface.height(),
             present_mode: wgpu::PresentMode::Fifo,
             desired_maximum_frame_latency: 1,
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
         };
-        surface.configure(&device, &config);
 
         let aspect = config.width as f32 / config.height as f32;
         let camera = Camera::new(aspect);
@@ -75,7 +69,6 @@ impl<'window> Context<'window> {
             surface,
             device,
             queue,
-            config,
             gpu_splats: None,
             camera
         })
@@ -86,9 +79,7 @@ impl<'window> Context<'window> {
             return; // Avoid resizing to invalid size
         }
 
-        self.config.width = new_width;
-        self.config.height = new_height;
-        self.surface.configure(&self.device, &self.config);
+        self.surface.resize(&self.device, new_width, new_height);
     }
 
     pub fn upload_splats(&mut self, raw: &RawSplats) {
@@ -99,7 +90,6 @@ impl<'window> Context<'window> {
         let frame = match self.surface.get_current_texture() {
             Ok(frame) => frame,
             Err(_) => {
-                self.surface.configure(&self.device, &self.config);
                 self.surface
                     .get_current_texture()
                     .expect("Failed to acquire next swap chain texture")
