@@ -5,7 +5,7 @@
 #[rustfmt::skip]
 fn create_composer() -> naga_oil::compose::Composer {
     let mut composer = naga_oil::compose::Composer::default().with_capabilities(
-            wgpu::naga::valid::Capabilities::all()
+            naga::valid::Capabilities::all()
         );
     composer.add_composable_module(naga_oil::compose::ComposableModuleDescriptor {
         source: include_str!("./sorting.wgsl"),
@@ -26,7 +26,7 @@ pub mod sort_count {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("sort_count.wgsl"),
             file_path: "sort_count.wgsl",
@@ -41,7 +41,7 @@ pub mod sort_reduce {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("sort_reduce.wgsl"),
             file_path: "sort_reduce.wgsl",
@@ -56,7 +56,7 @@ pub mod sort_scan {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("sort_scan.wgsl"),
             file_path: "sort_scan.wgsl",
@@ -71,7 +71,7 @@ pub mod sort_scan_add {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("sort_scan_add.wgsl"),
             file_path: "sort_scan_add.wgsl",
@@ -91,7 +91,7 @@ pub mod sort_scatter {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("sort_scatter.wgsl"),
             file_path: "sort_scatter.wgsl",

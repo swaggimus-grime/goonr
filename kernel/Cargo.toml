@@ -9,8 +9,8 @@ license.workspace = true
 burn.workspace = true
 burn-cubecl.workspace = true
 bytemuck.workspace = true
+naga.workspace = true
 naga_oil.workspace = true
-wgpu.workspace = true
 
 [build-dependencies]
 wgsl = { path = "../wgsl" }

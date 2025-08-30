@@ -23,3 +23,10 @@ serde_json = { workspace = true }
 log = "0.4"
 tauri = { version = "2.5.0" }
 tauri-plugin-log = "2.0.0-rc"
+anyhow = { workspace = true }
+pipeline = { path = "..\..\pipeline" }
+scene-source = { path = "..\..\scene-source" }
+render = { path = "..\..\render" }
+train = { path = "..\..\train" }
+dataset = { path = "..\..\dataset" }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "time"] }

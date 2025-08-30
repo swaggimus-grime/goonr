@@ -2,14 +2,15 @@
 mod codewriter;
 
 use anyhow::Result;
-use naga::{Handle, Type, proc::GlobalCtx, valid::Capabilities};
 use naga_oil::compose::{
     ComposableModuleDescriptor, Composer, ComposerError, NagaModuleDescriptor,
 };
 use regex::Regex;
 use std::{borrow::Cow, collections::HashMap, io, path::Path, sync::OnceLock};
+use naga::{Handle, Type};
+use naga::common::wgsl::TypeContext;
+use naga::proc::GlobalCtx;
 use thiserror::Error;
-use wgpu::naga::{self, common::wgsl::TypeContext};
 
 const DECORATION_PRE: &str = "X_naga_oil_mod_X";
 const DECORATION_POST: &str = "X";
@@ -78,7 +79,7 @@ fn mod_name_from_mangled(string: &str) -> (String, String) {
     (mod_name, name)
 }
 
-fn rust_type_name(ty: Handle<naga::Type>, ctx: &GlobalCtx) -> String {
+fn rust_type_name(ty: Handle<Type>, ctx: &GlobalCtx) -> String {
     let wgsl_name = ctx.type_to_string(ty);
 
     match wgsl_name.as_str() {
@@ -132,7 +133,7 @@ pub fn build_modules(paths: &[&str], includes: &[&str], output_path: &str) -> Re
             wgpu::naga::valid::Capabilities::all()
         );",
     ]);
-    let mut composer = Composer::default().with_capabilities(Capabilities::all());
+    let mut composer = Composer::default().with_capabilities(naga::valid::Capabilities::all());
     let mut modules = HashMap::new();
     for include in includes {
         let helper_source = &std::fs::read_to_string(include)?;

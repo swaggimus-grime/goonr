@@ -1,5 +1,5 @@
 [package]
-name = "viewer"
+name = "websplat"
 edition.workspace = true
 version.workspace = true
 readme.workspace = true
@@ -9,8 +9,10 @@ license.workspace = true
 web-cmn.path = "../web-cmn"
 bytemuck.workspace = true
 glam.workspace = true
-wgpu = { workspace = true, default-features = false, features = ["wgsl", "webgpu"] }
+gloo-console.workspace = true
+wgpu = { workspace = true, default-features = false, features = ["wgsl", "webgpu", "webgl"] }
 thiserror = { workspace = true }
 web-sys = { workspace = true, features = [
-    "HtmlCanvasElement"
+    "HtmlCanvasElement",
+    "GpuCanvasContext"
 ]}

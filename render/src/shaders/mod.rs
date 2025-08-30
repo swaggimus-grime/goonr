@@ -5,7 +5,7 @@
 #[rustfmt::skip]
 fn create_composer() -> naga_oil::compose::Composer {
     let mut composer = naga_oil::compose::Composer::default().with_capabilities(
-            wgpu::naga::valid::Capabilities::all()
+            naga::valid::Capabilities::all()
         );
     composer.add_composable_module(naga_oil::compose::ComposableModuleDescriptor {
         source: include_str!("./helpers.wgsl"),
@@ -62,7 +62,7 @@ pub mod map_gaussian_to_intersects {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("map_gaussian_to_intersects.wgsl"),
             file_path: "map_gaussian_to_intersects.wgsl",
@@ -77,7 +77,7 @@ pub mod project_forward {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("project_forward.wgsl"),
             file_path: "project_forward.wgsl",
@@ -128,7 +128,7 @@ pub mod project_visible {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("project_visible.wgsl"),
             file_path: "project_visible.wgsl",
@@ -143,7 +143,7 @@ pub mod rasterize {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("rasterize.wgsl"),
             file_path: "rasterize.wgsl",

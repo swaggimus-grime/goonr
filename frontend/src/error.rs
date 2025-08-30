@@ -8,5 +8,8 @@ pub enum FrontendError {
     BadRequest(#[from] gloo_net::Error),
     
     #[error("Viewer error: {0}")]
-    ViewerError(#[from] viewer::error::ViewerError)
+    ViewerError(&'static str),
+    
+    #[error("WebSplat error: {0}")]
+    WebSplatError(#[from] websplat::WebSplatError)
 }

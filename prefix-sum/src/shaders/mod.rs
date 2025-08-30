@@ -5,7 +5,7 @@
 #[rustfmt::skip]
 fn create_composer() -> naga_oil::compose::Composer {
     let mut composer = naga_oil::compose::Composer::default().with_capabilities(
-            wgpu::naga::valid::Capabilities::all()
+            naga::valid::Capabilities::all()
         );
     composer.add_composable_module(naga_oil::compose::ComposableModuleDescriptor {
         source: include_str!("./prefix_sum_helpers.wgsl"),
@@ -21,7 +21,7 @@ pub mod prefix_sum_add_scanned_sums {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("prefix_sum_add_scanned_sums.wgsl"),
             file_path: "prefix_sum_add_scanned_sums.wgsl",
@@ -40,7 +40,7 @@ pub mod prefix_sum_scan {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("prefix_sum_scan.wgsl"),
             file_path: "prefix_sum_scan.wgsl",
@@ -55,7 +55,7 @@ pub mod prefix_sum_scan_sums {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("prefix_sum_scan_sums.wgsl"),
             file_path: "prefix_sum_scan_sums.wgsl",

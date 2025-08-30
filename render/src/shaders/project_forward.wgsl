@@ -38,7 +38,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3u) {
     var quat = quats[global_gid];
 
     // Skip any invalid rotations. This will mean overtime
-    // these gaussians just die off while optimizing. For the viewer, the importer
+    // these gaussians just die off while optimizing. For the websplat, the importer
     // atm always normalizes the quaternions.
     // Phrase as positive to bail on NaN.
     valid &= length(quat) > 1e-32;

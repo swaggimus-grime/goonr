@@ -18,7 +18,6 @@ use burn_cubecl::kernel::KernelMetadata;
 pub use burn_cubecl::{CubeRuntime, cubecl::Compiler, tensor::CubeTensor};
 
 use bytemuck::Pod;
-use wgpu::naga;
 
 pub fn calc_cube_count<const D: usize>(sizes: [u32; D], workgroup_size: [u32; 3]) -> CubeCount {
     CubeCount::Static(
@@ -108,7 +107,7 @@ macro_rules! kernel_source_gen {
 
             pub const WORKGROUP_SIZE: [u32; 3] = $module::WORKGROUP_SIZE;
 
-            fn source(&self) -> wgpu::naga::Module {
+            fn source(&self) -> naga::Module {
                 let shader_defs = self.create_shader_hashmap();
                 $module::create_shader_source(shader_defs)
             }

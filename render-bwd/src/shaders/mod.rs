@@ -5,7 +5,7 @@
 #[rustfmt::skip]
 fn create_composer() -> naga_oil::compose::Composer {
     let mut composer = naga_oil::compose::Composer::default().with_capabilities(
-            wgpu::naga::valid::Capabilities::all()
+            naga::valid::Capabilities::all()
         );
     composer.add_composable_module(naga_oil::compose::ComposableModuleDescriptor {
         source: include_str!("./..\\..\\..\\render\\src\\shaders\\helpers.wgsl"),
@@ -51,7 +51,7 @@ pub mod gather_grads {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("gather_grads.wgsl"),
             file_path: "gather_grads.wgsl",
@@ -107,7 +107,7 @@ pub mod project_backwards {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("project_backwards.wgsl"),
             file_path: "project_backwards.wgsl",
@@ -123,7 +123,7 @@ pub mod rasterize_backwards {
     
     pub(crate) fn create_shader_source(
        shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>
-    ) -> wgpu::naga::Module {
+    ) -> naga::Module {
         super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {
             source: include_str!("rasterize_backwards.wgsl"),
             file_path: "rasterize_backwards.wgsl",

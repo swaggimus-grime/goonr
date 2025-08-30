@@ -6,7 +6,7 @@ use crate::components::viewer::Viewer;
 pub enum Route {
     #[at("/")]
     Home,
-    #[at("/viewer/:scene_name")]
+    #[at("/websplat/:scene_name")]
     Viewer { scene_name: String },
     #[at("/scenes")]
     Scenes,

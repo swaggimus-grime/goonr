@@ -29,7 +29,7 @@ pub fn scene_list(props: &SceneListProps) -> Html {
                 let scene = response.clone();
                 let navigator = navigator.clone();
                 let on_click = Callback::from(move |_: MouseEvent| {
-                    info!("Navigating to viewer with scene name: ", &scene.name);
+                    info!("Navigating to websplat with scene name: ", &scene.name);
                     navigator.push(&Route::Viewer { scene_name: scene.name.clone() });
                 });
 

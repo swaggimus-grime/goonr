@@ -1,11 +1,11 @@
 [package]
 name = "frontend"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 build = "build.rs"
 
 [dependencies]
-viewer = { path = "../viewer" }
+websplat = { path = "../websplat" }
 web-cmn = { path = "../web-cmn" }
 glam.workspace = true
 serde = { workspace = true }
@@ -20,9 +20,10 @@ wasm-bindgen-futures = "0.4.50"
 wasm-bindgen = "0.2.100"
 wasm-logger = "0.2.0"
 gloo = { version = "0.11.0", features = ["render"] }
-gloo-console = "0.3.0"
+gloo-console.workspace = true
 gloo-events = "0.2.0"
 gloo-file = "0.3.0"
 gloo-net = { version = "0.6.0", features = ["websocket"] }
+bincode = "1.3.3"
 
 [features]
