@@ -47,7 +47,7 @@ pub async fn run(source: Source, load_config: LoadConfig, pipeline_config: Pipel
 
     let pipeline_config = &pipeline_config;
     log::info!("Using seed {}", pipeline_config.seed);
-    <MainBackend as Backend>::seed(pipeline_config.seed);
+    <MainBackend as Backend>::seed(&device, pipeline_config.seed);
     let mut rng = rand::rngs::StdRng::from_seed([pipeline_config.seed as u8; 32]);
 
     let splats = if let Some(splats) = initial_splats {
@@ -169,7 +169,7 @@ pub async fn run(source: Source, load_config: LoadConfig, pipeline_config: Pipel
         }
 
         // How frequently to send splats to websocket
-        const UPDATE_EVERY: u32 = 5;
+        const UPDATE_EVERY: u32 = 100;
         if iter % UPDATE_EVERY == 0 || is_last_step {
             let message = PipelineMessage::TrainStep {
                 splats: Box::new(splats.valid()),

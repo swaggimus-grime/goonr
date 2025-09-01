@@ -10,6 +10,8 @@ mod splats;
 mod splatter;
 mod context;
 mod quad;
+mod preprocessor;
+mod sorter;
 
 pub use context::Context;
 pub use splatter::Splatter;

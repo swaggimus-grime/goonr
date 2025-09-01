@@ -130,7 +130,7 @@ pub fn build_modules(paths: &[&str], includes: &[&str], output_path: &str) -> Re
         "#[rustfmt::skip]",
         "fn create_composer() -> naga_oil::compose::Composer {",
         "let mut composer = naga_oil::compose::Composer::default().with_capabilities(
-            wgpu::naga::valid::Capabilities::all()
+            naga::valid::Capabilities::all()
         );",
     ]);
     let mut composer = Composer::default().with_capabilities(naga::valid::Capabilities::all());
@@ -358,7 +358,7 @@ pub fn build_modules(paths: &[&str], includes: &[&str], output_path: &str) -> Re
                     "",
                     "pub(crate) fn create_shader_source(",
                     "   shader_defs: std::collections::HashMap<String, naga_oil::compose::ShaderDefValue>",
-                    ") -> wgpu::naga::Module {",
+                    ") -> naga::Module {",
                     "super::create_composer().make_naga_module(naga_oil::compose::NagaModuleDescriptor {",
                     &format!("source: include_str!(\"{relative_path_str}\"),"),
                     &format!("file_path: \"{relative_path_str}\","),

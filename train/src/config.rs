@@ -17,7 +17,7 @@ pub struct TrainConfig {
     #[config(default = 4e-5)]
     pub lr_mean: f64,
 
-    /// Start learning rate for the mean parameters.
+    /// End learning rate for the mean parameters.
     #[config(default = 4e-7)]
     pub lr_mean_end: f64,
 
