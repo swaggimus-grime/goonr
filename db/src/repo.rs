@@ -22,8 +22,8 @@ pub trait SplatRepository: Send + Sync {
     async fn can_add(&self, name: &str) -> bool;
 }
 
-const ROOT_NS: &'static str = "goonr";
-const DB_NAME: &'static str = "goonr_db";
+const ROOT_NS: &'static str = "ggs";
+const DB_NAME: &'static str = "ggs_db";
 const TABLE_SCENE: &str = "scene";
 
 pub struct SplatRepo {

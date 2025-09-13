@@ -1,9 +1,8 @@
-# goonr
-Gaussians Optimized On Rust.
+# ggs
+Gaussian graphics server
 
 ## About
 I'm learning Rust. This is my first ML project on Rust.
-Currently only rendering quads.
 
 ## How to
 Run backend crated with `cargo run --release` and frontend with `trunk serve --open`.
